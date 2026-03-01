@@ -1,12 +1,18 @@
 // frontend/src/services/api.js
-const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 async function request(path, options = {}) {
-  const token = localStorage.getItem("access_token");
-  const headers = { "Content-Type": "application/json", ...options.headers };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const token = localStorage.getItem('access_token');
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${BASE}${path}`, { ...options, headers, credentials: 'include' });
+
+  if (res.status === 401) {
+    localStorage.removeItem('access_token');
+    window.location.href = '/admin/login';
+    return;
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw err;
@@ -15,126 +21,117 @@ async function request(path, options = {}) {
   return res.json();
 }
 
-// ── Public API ───────────────────────────────────────────────────────────────
+// Public
 export const api = {
-  // Locations
-  getTowns: () => request("/towns/"),
-  getStages: (townSlug) => request(`/stages/?town__slug=${townSlug}`),
-
-  // Search
-  searchTrips: (origin, destination, date) =>
-    request(`/trips/search/?origin=${origin}&destination=${destination}&date=${date}`),
-
-  // Trip detail
+  getTowns: () => request('/towns/'),
+  getStages: (slug) => request(`/stages/?town__slug=${slug}`),
+  searchTrips: (o, d, date) => request(`/trips/search/?origin=${o}&destination=${d}&date=${date}`),
   getTripDetail: (slug) => request(`/trips/${slug}/`),
   getStageRunDetail: (slug) => request(`/stage-runs/${slug}/`),
-
-  // Seat status (poll every 3s)
   getTripSeatStatus: (slug) => request(`/trips/${slug}/seat-status/`),
   getStageRunSeatStatus: (slug) => request(`/stage-runs/${slug}/seat-status/`),
-
-  // Lock seats
-  lockTripSeats: (slug, seatNumbers, action = "lock") =>
-    request(`/trips/${slug}/lock-seats/`, {
-      method: "POST",
-      body: JSON.stringify({ seat_numbers: seatNumbers, action }),
-    }),
-  lockStageRunSeats: (slug, seatNumbers, action = "lock") =>
-    request(`/stage-runs/${slug}/lock-seats/`, {
-      method: "POST",
-      body: JSON.stringify({ seat_numbers: seatNumbers, action }),
-    }),
-
-  // Booking
-  createBooking: (data) =>
-    request("/bookings/", { method: "POST", body: JSON.stringify(data) }),
+  lockTripSeats: (slug, seats, action = 'lock') =>
+    request(`/trips/${slug}/lock-seats/`, { method: 'POST', body: JSON.stringify({ seat_numbers: seats, action }) }),
+  lockStageRunSeats: (slug, seats, action = 'lock') =>
+    request(`/stage-runs/${slug}/lock-seats/`, { method: 'POST', body: JSON.stringify({ seat_numbers: seats, action }) }),
+  createBooking: (data) => request('/bookings/', { method: 'POST', body: JSON.stringify(data) }),
   trackBooking: (ref) => request(`/bookings/track/${ref}/`),
-  cancelBooking: (slug) =>
-    request(`/bookings/${slug}/cancel/`, { method: "POST" }),
-
-  // Payment
-  initiatePayment: (bookingRef, phone) =>
-    request("/payments/initiate/", {
-      method: "POST",
-      body: JSON.stringify({ booking_reference: bookingRef, phone_number: phone }),
-    }),
+  cancelBooking: (slug) => request(`/bookings/${slug}/cancel/`, { method: 'POST' }),
+  initiatePayment: (ref, phone) =>
+    request('/payments/initiate/', { method: 'POST', body: JSON.stringify({ booking_reference: ref, phone_number: phone }) }),
   getPaymentStatus: (ref) => request(`/payments/status/${ref}/`),
-
-  // Cleanup
-  cleanupLocks: () => request("/seat-locks/cleanup/", { method: "POST" }),
+  cleanupLocks: () => request('/seat-locks/cleanup/', { method: 'POST' }),
 };
 
-// ── Admin API ────────────────────────────────────────────────────────────────
-export const adminApi = {
+// Admin Auth
+export const adminAuth = {
   login: (username, password) =>
-    request("/admin-api/auth/login/", {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-    }),
-  me: () => request("/admin-api/auth/me/"),
-  dashboard: () => request("/admin-api/dashboard/stats/"),
+    request('/admin-api/auth/login/', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  me: () => request('/admin-api/auth/me/'),
+  logout: () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('admin_user');
+    window.location.href = '/admin/login';
+  },
+};
+
+export const adminDash = {
+  stats: () => request('/admin-api/dashboard/stats/'),
   revenueChart: (days = 30) => request(`/admin-api/dashboard/revenue-chart/?days=${days}`),
+};
 
-  // Matatus
-  getMatatus: (params = "") => request(`/admin-api/matatus/${params}`),
-  getMatatu: (slug) => request(`/admin-api/matatus/${slug}/`),
-  createMatatu: (data) =>
-    request("/admin-api/matatus/", { method: "POST", body: JSON.stringify(data) }),
-  updateMatatu: (slug, data) =>
-    request(`/admin-api/matatus/${slug}/`, { method: "PATCH", body: JSON.stringify(data) }),
-  saveSeatLayout: (slug, seats) =>
-    request(`/admin-api/matatus/${slug}/save-layout/`, {
-      method: "POST",
-      body: JSON.stringify({ seats }),
-    }),
+export const adminTowns = {
+  list: (p = '') => request(`/admin-api/towns/${p}`),
+  create: (d) => request('/admin-api/towns/', { method: 'POST', body: JSON.stringify(d) }),
+  update: (slug, d) => request(`/admin-api/towns/${slug}/`, { method: 'PATCH', body: JSON.stringify(d) }),
+  delete: (slug) => request(`/admin-api/towns/${slug}/`, { method: 'DELETE' }),
+};
+
+export const adminStages = {
+  list: (p = '') => request(`/admin-api/stages/${p}`),
+  create: (d) => request('/admin-api/stages/', { method: 'POST', body: JSON.stringify(d) }),
+  update: (slug, d) => request(`/admin-api/stages/${slug}/`, { method: 'PATCH', body: JSON.stringify(d) }),
+  delete: (slug) => request(`/admin-api/stages/${slug}/`, { method: 'DELETE' }),
+};
+
+export const adminRoutes = {
+  list: (p = '') => request(`/admin-api/routes/${p}`),
+  create: (d) => request('/admin-api/routes/', { method: 'POST', body: JSON.stringify(d) }),
+  update: (slug, d) => request(`/admin-api/routes/${slug}/`, { method: 'PATCH', body: JSON.stringify(d) }),
+  delete: (slug) => request(`/admin-api/routes/${slug}/`, { method: 'DELETE' }),
+};
+
+export const adminMatatuTypes = {
+  list: () => request('/matatu-types/'),
+};
+
+export const adminMatatus = {
+  list: (p = '') => request(`/admin-api/matatus/${p}`),
+  get: (slug) => request(`/admin-api/matatus/${slug}/`),
+  create: (d) => request('/admin-api/matatus/', { method: 'POST', body: JSON.stringify(d) }),
+  update: (slug, d) => request(`/admin-api/matatus/${slug}/`, { method: 'PATCH', body: JSON.stringify(d) }),
+  delete: (slug) => request(`/admin-api/matatus/${slug}/`, { method: 'DELETE' }),
+  saveLayout: (slug, seats) =>
+    request(`/admin-api/matatus/${slug}/save-layout/`, { method: 'POST', body: JSON.stringify({ seats }) }),
   assignDriver: (slug, driverId) =>
-    request(`/admin-api/matatus/${slug}/assign-driver/`, {
-      method: "POST",
-      body: JSON.stringify({ driver_id: driverId }),
-    }),
-
-  // Trips
-  getTrips: (params = "") => request(`/admin-api/trips/${params}`),
-  createTrip: (data) =>
-    request("/admin-api/trips/", { method: "POST", body: JSON.stringify(data) }),
-  getTripManifest: (slug) => request(`/admin-api/trips/${slug}/manifest/`),
-  updateTripStatus: (slug, s) =>
-    request(`/admin-api/trips/${slug}/update-status/`, {
-      method: "PATCH", body: JSON.stringify({ status: s }),
-    }),
-
-  // Stage runs
-  getStageRuns: (params = "") => request(`/admin-api/stage-runs/${params}`),
-  getStageRunManifest: (slug) => request(`/admin-api/stage-runs/${slug}/manifest/`),
-  updateStageRunStatus: (slug, s) =>
-    request(`/admin-api/stage-runs/${slug}/update-status/`, {
-      method: "PATCH", body: JSON.stringify({ status: s }),
-    }),
-
-  // Bookings
-  getBookings: (params = "") => request(`/admin-api/bookings/${params}`),
-  confirmBooking: (ref) =>
-    request(`/admin-api/bookings/${ref}/confirm/`, { method: "POST" }),
-
-  // Drivers
-  getDrivers: () => request("/admin-api/drivers/"),
-  createDriver: (data) =>
-    request("/admin-api/drivers/", { method: "POST", body: JSON.stringify(data) }),
+    request(`/admin-api/matatus/${slug}/assign-driver/`, { method: 'POST', body: JSON.stringify({ driver_id: driverId }) }),
 };
 
-// ── Driver API ────────────────────────────────────────────────────────────────
-export const driverApi = {
-  dashboard: () => request("/driver/dashboard/"),
-  tripManifest: (slug) => request(`/driver/trips/${slug}/manifest/`),
-  stageRunManifest: (slug) => request(`/driver/stage-runs/${slug}/manifest/`),
-  createBooking: (data) =>
-    request("/driver/bookings/", { method: "POST", body: JSON.stringify(data) }),
-  createStageRun: (data) =>
-    request("/driver/stage-runs/", { method: "POST", body: JSON.stringify(data) }),
+export const adminTrips = {
+  list: (p = '') => request(`/admin-api/trips/${p}`),
+  get: (slug) => request(`/admin-api/trips/${slug}/`),
+  create: (d) => request('/admin-api/trips/', { method: 'POST', body: JSON.stringify(d) }),
+  update: (slug, d) => request(`/admin-api/trips/${slug}/`, { method: 'PATCH', body: JSON.stringify(d) }),
+  delete: (slug) => request(`/admin-api/trips/${slug}/`, { method: 'DELETE' }),
+  manifest: (slug) => request(`/admin-api/trips/${slug}/manifest/`),
+  updateStatus: (slug, s) =>
+    request(`/admin-api/trips/${slug}/update-status/`, { method: 'PATCH', body: JSON.stringify({ status: s }) }),
 };
 
-// ── Owner API ────────────────────────────────────────────────────────────────
-export const ownerApi = {
-  dashboard: () => request("/owner/dashboard/"),
-  matautuEarnings: (slug, days = 30) => request(`/owner/matatus/${slug}/earnings/?days=${days}`),
+export const adminStageRuns = {
+  list: (p = '') => request(`/admin-api/stage-runs/${p}`),
+  get: (slug) => request(`/admin-api/stage-runs/${slug}/`),
+  create: (d) => request('/admin-api/stage-runs/', { method: 'POST', body: JSON.stringify(d) }),
+  update: (slug, d) => request(`/admin-api/stage-runs/${slug}/`, { method: 'PATCH', body: JSON.stringify(d) }),
+  delete: (slug) => request(`/admin-api/stage-runs/${slug}/`, { method: 'DELETE' }),
+  manifest: (slug) => request(`/admin-api/stage-runs/${slug}/manifest/`),
+  updateStatus: (slug, s) =>
+    request(`/admin-api/stage-runs/${slug}/update-status/`, { method: 'PATCH', body: JSON.stringify({ status: s }) }),
+};
+
+export const adminBookings = {
+  list: (p = '') => request(`/admin-api/bookings/${p}`),
+  get: (ref) => request(`/admin-api/bookings/${ref}/`),
+  confirm: (ref) => request(`/admin-api/bookings/${ref}/confirm/`, { method: 'POST' }),
+  cancel: (ref) => request(`/admin-api/bookings/${ref}/cancel/`, { method: 'POST' }),
+};
+
+export const adminDrivers = {
+  list: (p = '') => request(`/admin-api/drivers/${p}`),
+  get: (id) => request(`/admin-api/drivers/${id}/`),
+  create: (d) => request('/admin-api/drivers/', { method: 'POST', body: JSON.stringify(d) }),
+  update: (id, d) => request(`/admin-api/drivers/${id}/`, { method: 'PATCH', body: JSON.stringify(d) }),
+  delete: (id) => request(`/admin-api/drivers/${id}/`, { method: 'DELETE' }),
+  toggleStatus: (id) => request(`/admin-api/drivers/${id}/toggle-status/`, { method: 'POST' }),
 };
