@@ -264,7 +264,6 @@ class BookingViewSet(viewsets.ModelViewSet):
 # ─────────────────────────────────────────────────────────────────────────────
 # PAYMENT VIEWS
 # ─────────────────────────────────────────────────────────────────────────────
-
 class PaymentInitiateView(APIView):
     permission_classes = [AllowAny]
 
@@ -285,11 +284,16 @@ class PaymentInitiateView(APIView):
             return Response({'error': 'Booking already paid'}, status=400)
 
         phone = self._normalize_phone(phone)
+        print(f"[PAY] normalized phone: {phone}")
+
         access_token = self._get_mpesa_token()
+        print(f"[PAY] access_token: {access_token}")
+
         if not access_token:
             return Response({'error': 'Could not connect to M-Pesa.'}, status=503)
 
         response = self._stk_push(booking, phone, access_token)
+        print(f"[PAY] stk_push response: {response}")
 
         if response.get('ResponseCode') == '0':
             Payment.objects.update_or_create(
@@ -323,6 +327,9 @@ class PaymentInitiateView(APIView):
     def _get_mpesa_token(self):
         env = getattr(settings, 'MPESA_ENVIRONMENT', 'sandbox')
         base = 'https://sandbox.safaricom.co.ke' if env == 'sandbox' else 'https://api.safaricom.co.ke'
+        print(f"[TOKEN] env={env} base={base}")
+        print(f"[TOKEN] CONSUMER_KEY={getattr(settings, 'MPESA_CONSUMER_KEY', 'NOT SET')}")
+        print(f"[TOKEN] CONSUMER_SECRET={getattr(settings, 'MPESA_CONSUMER_SECRET', 'NOT SET')}")
         creds = base64.b64encode(
             f"{settings.MPESA_CONSUMER_KEY}:{settings.MPESA_CONSUMER_SECRET}".encode()
         ).decode()
@@ -331,10 +338,12 @@ class PaymentInitiateView(APIView):
                 f'{base}/oauth/v1/generate?grant_type=client_credentials',
                 headers={'Authorization': f'Basic {creds}'}, timeout=15
             )
+            print(f"[TOKEN] status={r.status_code} body={r.text[:300]}")
             if r.status_code != 200:
                 return None
             return r.json().get('access_token')
         except Exception as e:
+            print(f"[TOKEN] exception: {type(e).__name__}: {e}")
             logger.error(f"M-Pesa token error: {e}")
             return None
 
@@ -344,6 +353,9 @@ class PaymentInitiateView(APIView):
         ts = timezone.now().strftime('%Y%m%d%H%M%S')
         sc = settings.MPESA_SHORTCODE
         pw = base64.b64encode(f"{sc}{settings.MPESA_PASSKEY}{ts}".encode()).decode()
+        print(f"[STK] shortcode={sc} timestamp={ts}")
+        print(f"[STK] PASSKEY={getattr(settings, 'MPESA_PASSKEY', 'NOT SET')}")
+        print(f"[STK] CALLBACK_URL={getattr(settings, 'MPESA_CALLBACK_URL', 'NOT SET')}")
         try:
             r = requests.post(
                 f'{base}/mpesa/stkpush/v1/processrequest',
@@ -359,8 +371,10 @@ class PaymentInitiateView(APIView):
                 headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
                 timeout=30
             )
+            print(f"[STK] status={r.status_code} body={r.text[:300]}")
             return r.json() if r.text.strip() else {'errorMessage': 'Empty response'}
         except Exception as e:
+            print(f"[STK] exception: {type(e).__name__}: {e}")
             return {'errorMessage': str(e)}
 
 
