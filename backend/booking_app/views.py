@@ -238,6 +238,9 @@ class BookingViewSet(viewsets.ModelViewSet):
             booking = serializer.save()
             return Response(BookingDetailSerializer(booking).data,
                             status=status.HTTP_201_CREATED)
+        print("BOOKING ERRORS:", serializer.errors)          # ← add this
+        print("BOOKING DATA:", request.data) 
+            
         return Response(serializer.errors, status=400)
 
     @action(detail=False, methods=['get'], url_path='track/(?P<reference>[^/.]+)')

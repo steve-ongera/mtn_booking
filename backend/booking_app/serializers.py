@@ -235,34 +235,106 @@ class BookedSeatSerializer(serializers.ModelSerializer):
         fields = ['id', 'seat_number', 'seat_class', 'price']
 
 
+"""
+FIX: In booking_app/serializers.py
+
+Replace the BookingCreateSerializer class with this version.
+
+Problem: Frontend sends boarding_stage_slug=1 and alighting_stage_slug=5
+         (integer PKs), but SlugRelatedField tries to look up by slug string
+         → "Object with slug=1 does not exist."
+
+Fix: Replace boarding_stage_slug / alighting_stage_slug SlugRelatedFields
+     with PrimaryKeyRelatedField so they accept integer IDs.
+     Also rename the incoming field keys to boarding_stage_id / alighting_stage_id
+     to be honest about what they actually are, while keeping source= pointing
+     to the correct model field.
+
+     If you prefer to keep the old field names on the frontend, just change
+     the field class from SlugRelatedField → PrimaryKeyRelatedField and keep
+     the same key names — that works too (see Option B comment below).
+"""
+
+from rest_framework import serializers
+from .models import Stage, Trip, StageRun, SeatLayout, Booking, BookedSeat
+
+
 class BookingCreateSerializer(serializers.ModelSerializer):
     """
     Create a booking for either a Trip (express) or StageRun (stage).
     Provide either trip_slug OR stage_run_slug, not both.
+
+    Boarding / alighting stages are identified by integer PK.
     """
-    seat_numbers = serializers.ListField(child=serializers.CharField(), write_only=True)
+
+    seat_numbers = serializers.ListField(
+        child=serializers.CharField(), write_only=True
+    )
+
+    # ── trip / stage-run lookup (still by slug — these are correct) ────────
     trip_slug = serializers.SlugRelatedField(
-        slug_field='slug', queryset=Trip.objects.all(),
-        source='trip', write_only=True, required=False, allow_null=True
+        slug_field='slug',
+        queryset=Trip.objects.all(),
+        source='trip',
+        write_only=True,
+        required=False,
+        allow_null=True,
     )
     stage_run_slug = serializers.SlugRelatedField(
-        slug_field='slug', queryset=StageRun.objects.all(),
-        source='stage_run', write_only=True, required=False, allow_null=True
+        slug_field='slug',
+        queryset=StageRun.objects.all(),
+        source='stage_run',
+        write_only=True,
+        required=False,
+        allow_null=True,
     )
-    boarding_stage_slug = serializers.SlugRelatedField(
-        slug_field='slug', queryset=Stage.objects.all(),
-        source='boarding_stage', write_only=True, required=False, allow_null=True
+
+    # ── FIXED: accept integer PKs for boarding / alighting stages ──────────
+    #
+    # Option A (recommended): rename keys to *_id to be explicit.
+    #   Frontend sends: boarding_stage_id=1, alighting_stage_id=5
+    #
+    boarding_stage_id = serializers.PrimaryKeyRelatedField(
+        queryset=Stage.objects.all(),
+        source='boarding_stage',
+        write_only=True,
+        required=False,
+        allow_null=True,
     )
-    alighting_stage_slug = serializers.SlugRelatedField(
-        slug_field='slug', queryset=Stage.objects.all(),
-        source='alighting_stage', write_only=True, required=False, allow_null=True
+    alighting_stage_id = serializers.PrimaryKeyRelatedField(
+        queryset=Stage.objects.all(),
+        source='alighting_stage',
+        write_only=True,
+        required=False,
+        allow_null=True,
     )
+
+    #
+    # Option B: keep old key names (*_slug) but accept IDs.
+    #   Frontend keeps sending: boarding_stage_slug=1, alighting_stage_slug=5
+    #   Just uncomment these and remove the Option A fields above.
+    #
+    # boarding_stage_slug = serializers.PrimaryKeyRelatedField(
+    #     queryset=Stage.objects.all(),
+    #     source='boarding_stage',
+    #     write_only=True,
+    #     required=False,
+    #     allow_null=True,
+    # )
+    # alighting_stage_slug = serializers.PrimaryKeyRelatedField(
+    #     queryset=Stage.objects.all(),
+    #     source='alighting_stage',
+    #     write_only=True,
+    #     required=False,
+    #     allow_null=True,
+    # )
 
     class Meta:
         model = Booking
         fields = [
             'trip_slug', 'stage_run_slug', 'seat_numbers',
-            'boarding_stage_slug', 'alighting_stage_slug',
+            'boarding_stage_id', 'alighting_stage_id',   # ← Option A
+            # 'boarding_stage_slug', 'alighting_stage_slug',  # ← Option B
             'passenger_name', 'passenger_phone',
             'passenger_email', 'passenger_id_number',
         ]
@@ -272,9 +344,13 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         stage_run = attrs.get('stage_run')
 
         if not trip and not stage_run:
-            raise serializers.ValidationError("Provide either trip_slug or stage_run_slug.")
+            raise serializers.ValidationError(
+                "Provide either trip_slug or stage_run_slug."
+            )
         if trip and stage_run:
-            raise serializers.ValidationError("Provide only one of trip_slug or stage_run_slug.")
+            raise serializers.ValidationError(
+                "Provide only one of trip_slug or stage_run_slug."
+            )
 
         seat_numbers = attrs.get('seat_numbers', [])
         if not seat_numbers:
@@ -283,29 +359,40 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         matatu = trip.matatu if trip else stage_run.matatu
 
         seats = SeatLayout.objects.filter(
-            matatu=matatu, seat_number__in=seat_numbers,
-            is_active=True, is_aisle_gap=False,
-            is_driver_seat=False, is_conductor_seat=False,
+            matatu=matatu,
+            seat_number__in=seat_numbers,
+            is_active=True,
+            is_aisle_gap=False,
+            is_driver_seat=False,
+            is_conductor_seat=False,
         )
         if seats.count() != len(seat_numbers):
-            raise serializers.ValidationError("One or more seat numbers are invalid.")
+            raise serializers.ValidationError(
+                "One or more seat numbers are invalid."
+            )
 
         # Check already booked
-        filter_kwargs = {'booking__trip': trip} if trip else {'booking__stage_run': stage_run}
+        filter_kwargs = (
+            {'booking__trip': trip} if trip else {'booking__stage_run': stage_run}
+        )
         already_booked = BookedSeat.objects.filter(
             seat__in=seats,
             booking__status__in=['pending', 'confirmed'],
-            **filter_kwargs
+            **filter_kwargs,
         )
         if already_booked.exists():
-            nums = list(already_booked.values_list('seat__seat_number', flat=True))
-            raise serializers.ValidationError(f"Seats already taken: {', '.join(nums)}")
+            nums = list(
+                already_booked.values_list('seat__seat_number', flat=True)
+            )
+            raise serializers.ValidationError(
+                f"Seats already taken: {', '.join(nums)}"
+            )
 
         attrs['seats'] = seats
         return attrs
 
     def create(self, validated_data):
-        seat_numbers = validated_data.pop('seat_numbers')
+        validated_data.pop('seat_numbers', None)
         seats = validated_data.pop('seats')
         trip = validated_data.get('trip')
         stage_run = validated_data.get('stage_run')
@@ -319,8 +406,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
             BookedSeat.objects.create(booking=booking, seat=seat, price=fare)
 
         return booking
-
-
+    
 class BookingDetailSerializer(serializers.ModelSerializer):
     booked_seats = BookedSeatSerializer(many=True, read_only=True)
     boarding_stage = StageSerializer(read_only=True)
