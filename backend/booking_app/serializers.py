@@ -475,23 +475,55 @@ class OwnerSerializer(serializers.ModelSerializer):
 
 # ── Matatu Admin Serializers ──────────────────────────────────────────────────
 
+"""
+FIX: booking_app/serializers.py
+Replace the AdminMatutuSerializer class with this version.
+
+The bug: AdminMatutuSerializer had no `sacco` / `sacco_id` field, so when
+AdminMatutuViewSet.create() called serializer.save() the Matatu was built
+without a sacco → NOT NULL constraint on booking_app_matatu.sacco_id.
+
+Fix: add a write-only `sacco_id` field (optional – defaults to the single
+Sacco in the system), and inject it in create() if absent.
+"""
+
+from rest_framework import serializers
+from .models import (
+    Sacco, MatutuOwner, Driver, Town, Stage, Route,
+    MatutuType, Matatu, SeatLayout, BookedSeat, Payment, DailyEarnings,
+)
+from .serializers import SeatLayoutSerializer, RouteStopSerializer
+
+
 class AdminMatutuSerializer(serializers.ModelSerializer):
     matatu_type_name = serializers.CharField(source='matatu_type.name', read_only=True)
     matatu_type_id = serializers.PrimaryKeyRelatedField(
-        queryset=MatutuType.objects.all(), source='matatu_type', write_only=True, required=False
+        queryset=MatutuType.objects.all(), source='matatu_type',
+        write_only=True, required=False
     )
     route_name = serializers.CharField(source='route.name', read_only=True)
     route_id = serializers.PrimaryKeyRelatedField(
-        queryset=Route.objects.all(), source='route', write_only=True, required=False
+        queryset=Route.objects.all(), source='route',
+        write_only=True, required=False
     )
     owner_name = serializers.SerializerMethodField()
     owner_id = serializers.PrimaryKeyRelatedField(
-        queryset=MatutuOwner.objects.all(), source='owner', write_only=True, required=False
+        queryset=MatutuOwner.objects.all(), source='owner',
+        write_only=True, required=False
     )
     driver_name = serializers.SerializerMethodField()
     driver_id = serializers.PrimaryKeyRelatedField(
-        queryset=Driver.objects.all(), source='assigned_driver', write_only=True, required=False
+        queryset=Driver.objects.all(), source='assigned_driver',
+        write_only=True, required=False
     )
+
+    # ── NEW: expose sacco so the row can be saved ──────────────────────────
+    sacco_id = serializers.PrimaryKeyRelatedField(
+        queryset=Sacco.objects.all(), source='sacco',
+        write_only=True, required=False,       # optional: auto-filled below
+        help_text="Defaults to the first/only Sacco if omitted."
+    )
+
     seats = SeatLayoutSerializer(many=True, read_only=True)
     trip_count = serializers.SerializerMethodField()
     seat_count = serializers.SerializerMethodField()
@@ -504,11 +536,19 @@ class AdminMatutuSerializer(serializers.ModelSerializer):
             'route', 'route_name', 'route_id',
             'owner', 'owner_name', 'owner_id',
             'assigned_driver', 'driver_name', 'driver_id',
+            # ── sacco ──
+            'sacco', 'sacco_id',
+            # ─────────
             'total_seats', 'is_active', 'amenities', 'seats',
-            'trip_count', 'seat_count', 'created_at', 'updated_at'
+            'trip_count', 'seat_count', 'created_at', 'updated_at',
         ]
-        read_only_fields = ['slug', 'matatu_type', 'route', 'owner',
-                            'assigned_driver', 'created_at', 'updated_at']
+        read_only_fields = [
+            'slug', 'matatu_type', 'route', 'owner',
+            'assigned_driver', 'sacco',          # read-only display copies
+            'created_at', 'updated_at',
+        ]
+
+    # ── helpers ───────────────────────────────────────────────────────────
 
     def get_owner_name(self, obj):
         return obj.owner.user.get_full_name() if obj.owner else None
@@ -520,8 +560,37 @@ class AdminMatutuSerializer(serializers.ModelSerializer):
         return obj.trips.count()
 
     def get_seat_count(self, obj):
-        return obj.seats.filter(is_aisle_gap=False, is_driver_seat=False,
-                                is_conductor_seat=False).count()
+        return obj.seats.filter(
+            is_aisle_gap=False,
+            is_driver_seat=False,
+            is_conductor_seat=False,
+        ).count()
+
+    # ── auto-inject sacco on create ───────────────────────────────────────
+
+    def _resolve_sacco(self, validated_data):
+        """
+        If the caller didn't pass sacco_id, fall back to the single Sacco
+        that MTN Sacco always has.  Raises ValidationError if none exists.
+        """
+        if 'sacco' not in validated_data or validated_data.get('sacco') is None:
+            sacco = Sacco.objects.filter(is_active=True).first()
+            if sacco is None:
+                raise serializers.ValidationError(
+                    {'sacco_id': 'No active Sacco found. Create one first.'}
+                )
+            validated_data['sacco'] = sacco
+        return validated_data
+
+    def create(self, validated_data):
+        validated_data = self._resolve_sacco(validated_data)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # sacco is normally immutable after creation, but allow it to be
+        # corrected via update if somehow missing.
+        validated_data = self._resolve_sacco(validated_data)
+        return super().update(instance, validated_data)
 
 
 # ── Trip Admin Serializers ────────────────────────────────────────────────────
