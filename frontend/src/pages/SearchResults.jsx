@@ -308,7 +308,7 @@ export default function SearchResults() {
 
       <style>{`
         .search-results-page {
-          padding-top: var(--header-height);
+         
           min-height: 100vh;
           background: var(--gray-50);
         }

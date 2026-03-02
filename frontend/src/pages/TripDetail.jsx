@@ -508,7 +508,7 @@ export default function TripDetail({ isStageRun = false }) {
 
       <style>{`
         .trip-detail-page {
-          padding-top: var(--header-height);
+         
           min-height: 100vh;
           background: var(--gray-50);
         }
