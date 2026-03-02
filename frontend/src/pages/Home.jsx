@@ -41,7 +41,7 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
   );
 
   return (
-    <div className="form-group" ref={ref}>
+    <div className="form-group" ref={ref} style={{ position: 'relative' }}>
       <label className="form-label">{label}</label>
       <div className="position-relative">
         <i className="bi bi-geo-alt position-absolute" style={{ left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
@@ -60,7 +60,7 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
           <button
             onMouseDown={e => { e.preventDefault(); onChange(""); setQuery(""); setOpen(true); }}
             className="position-absolute"
-            style={{ right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray-400)' }}
+            style={{ right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}
           >
             <i className="bi bi-x" />
           </button>
@@ -88,61 +88,6 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
           No towns matching "{query}"
         </div>
       )}
-
-      <style>{`
-        .town-search-dropdown {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          right: 0;
-          background: white;
-          border: 1px solid var(--gray-200);
-          border-radius: var(--radius);
-          box-shadow: var(--shadow-lg);
-          z-index: 1000;
-          max-height: 200px;
-          overflow-y: auto;
-        }
-
-        .town-search-item {
-          padding: 12px 16px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          transition: var(--transition);
-        }
-
-        .town-search-item:hover {
-          background: var(--gray-50);
-        }
-
-        .town-search-item.active {
-          background: var(--primary-soft);
-          color: var(--primary-dark);
-          font-weight: 600;
-        }
-
-        .town-search-item i {
-          color: var(--gray-400);
-          font-size: 0.9rem;
-          width: 20px;
-        }
-
-        .town-search-empty {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          right: 0;
-          background: white;
-          border: 1px solid var(--gray-200);
-          border-radius: var(--radius);
-          box-shadow: var(--shadow-lg);
-          padding: 16px;
-          text-align: center;
-          color: var(--gray-500);
-        }
-      `}</style>
     </div>
   );
 }
@@ -209,6 +154,22 @@ export default function Home() {
       desc: "Receive your booking confirmation the moment you pay. Track your journey status at any time.",
       img: FEATURE_IMAGES[2],
     },
+  ];
+
+  const quickLinks = [
+    { label: "Home", path: "/", icon: "house" },
+    { label: "Search Trips", path: "/search", icon: "search" },
+    { label: "Track Booking", path: "/track/enter", icon: "geo-alt" },
+    { label: "About Us", path: "/about", icon: "info-circle" },
+    { label: "Contact", path: "/contact", icon: "telephone" },
+  ];
+
+  const supportLinks = [
+    { label: "FAQs", path: "/faqs", icon: "question-circle" },
+    { label: "Terms & Conditions", path: "/terms", icon: "file-text" },
+    { label: "Privacy Policy", path: "/privacy", icon: "shield" },
+    { label: "Refund Policy", path: "/refund", icon: "arrow-return-left" },
+    { label: "Help Center", path: "/help", icon: "headset" },
   ];
 
   return (
@@ -461,7 +422,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════════ FOOTER (from second Home page) ════════ */}
+      {/* ════════ FOOTER (from second Home page) with styled quick links ════════ */}
       <footer className="footer">
         <div className="footer-container">
           <div className="footer-grid">
@@ -496,29 +457,35 @@ export default function Home() {
 
             <div>
               <h4 className="footer-title">Quick Links</h4>
-              <ul className="footer-links">
-                <li><button onClick={() => navigate("/")}>Home</button></li>
-                <li><button onClick={() => navigate("/search")}>Search Trips</button></li>
-                <li><button onClick={() => navigate("/track/enter")}>Track Booking</button></li>
-                <li><button onClick={() => navigate("/about")}>About Us</button></li>
-                <li><button onClick={() => navigate("/contact")}>Contact</button></li>
+              <ul className="footer-links styled-links">
+                {quickLinks.map((link, index) => (
+                  <li key={index}>
+                    <button onClick={() => navigate(link.path)} className="footer-link-btn">
+                      <i className={`bi bi-${link.icon}`} />
+                      <span>{link.label}</span>
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
 
             <div>
               <h4 className="footer-title">Support</h4>
-              <ul className="footer-links">
-                <li><button>FAQs</button></li>
-                <li><button>Terms & Conditions</button></li>
-                <li><button>Privacy Policy</button></li>
-                <li><button>Refund Policy</button></li>
-                <li><button>Help Center</button></li>
+              <ul className="footer-links styled-links">
+                {supportLinks.map((link, index) => (
+                  <li key={index}>
+                    <button onClick={() => navigate(link.path)} className="footer-link-btn">
+                      <i className={`bi bi-${link.icon}`} />
+                      <span>{link.label}</span>
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
 
             <div>
               <h4 className="footer-title">Contact Us</h4>
-              <ul className="footer-links">
+              <ul className="footer-links contact-links">
                 <li>
                   <i className="bi bi-telephone me-2" />
                   <span>+254 722 400 400</span>
@@ -548,6 +515,94 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Additional styles for search dropdown and styled links */}
+      <style>{`
+        /* Ensure dropdown appears right below input */
+        .town-search-dropdown {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          margin-top: 4px;
+          background: white;
+          border: 1px solid var(--gray-200);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow-lg);
+          z-index: 1000;
+          max-height: 250px;
+          overflow-y: auto;
+        }
+
+        /* Styled footer links */
+        .footer-links.styled-links {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .footer-links.styled-links li {
+          margin-bottom: 12px;
+        }
+
+        .footer-link-btn {
+          background: none;
+          border: none;
+          color: var(--gray-400);
+          font-size: 0.95rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 6px 0;
+          transition: var(--transition);
+          width: 100%;
+          text-align: left;
+        }
+
+        .footer-link-btn i {
+          font-size: 1rem;
+          color: var(--gray-500);
+          transition: var(--transition);
+          width: 20px;
+        }
+
+        .footer-link-btn:hover {
+          color: white;
+          transform: translateX(5px);
+        }
+
+        .footer-link-btn:hover i {
+          color: var(--primary-light);
+        }
+
+        /* Contact links styling */
+        .contact-links {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .contact-links li {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 16px;
+          color: var(--gray-400);
+          font-size: 0.95rem;
+        }
+
+        .contact-links li i {
+          color: var(--primary-light);
+          font-size: 1.1rem;
+          width: 20px;
+        }
+
+        /* Ensure form-group has relative positioning for dropdown */
+        .form-group {
+          position: relative;
+        }
+      `}</style>
     </>
   );
 }
