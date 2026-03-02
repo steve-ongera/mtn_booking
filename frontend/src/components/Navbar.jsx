@@ -29,169 +29,67 @@ export default function Navbar() {
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
 
   const navLinks = [
-    { label: "Home",    path: "/" },
-    { label: "About",   path: "/about" },
-    { label: "Contact", path: "/contact" },
+    { label: "Home",    path: "/", icon: "house" },
+    { label: "About",   path: "/about", icon: "info-circle" },
+    { label: "Contact", path: "/contact", icon: "telephone" },
   ];
 
-  // IMPROVED: On homepage, start with dark background and white text immediately
-  // On other pages, always use white background with dark text
+  // On homepage, start with dark background and white text
+  // On other pages, use white background with dark text
   const isTransparent = isHome && !scrolled;
-
-  // Better contrast for initial state
-  const navBg         = isTransparent ? "rgba(0, 0, 0, 0.6)"      : "#ffffff";
-  const navBorder     = isTransparent ? "1px solid rgba(255,255,255,0.15)" : "1px solid var(--gray-100)";
-  const navShadow     = isTransparent ? "none"                    : "0 2px 20px rgba(0,0,0,.06)";
-  const navBackdrop   = isTransparent ? "blur(8px)"               : "none";
-  const textColor     = isTransparent ? "#ffffff"                 : "var(--gray-700)";
-  const activeColor   = isTransparent ? "#ffffff"                 : "var(--primary)";
-  const activeBg      = isTransparent ? "rgba(255,255,255,0.2)"   : "var(--primary-light)";
-  const logoTextColor = isTransparent ? "#ffffff"                 : "var(--gray-900)";
-  const logoSubColor  = isTransparent ? "rgba(255,255,255,0.7)"   : "var(--gray-500)";
-  const logoBg        = isTransparent ? "rgba(255,255,255,0.2)"   : "var(--primary)";
-  const logoBorder    = isTransparent ? "1px solid rgba(255,255,255,0.3)" : "none";
 
   return (
     <>
-      <nav style={{
-        position: "fixed",
-        top: 0, left: 0, right: 0,
-        zIndex: 200,
-        height: "var(--header-height)",
-        background: navBg,
-        borderBottom: navBorder,
-        boxShadow: navShadow,
-        backdropFilter: navBackdrop,
-        WebkitBackdropFilter: navBackdrop,
-        display: "flex",
-        alignItems: "center",
-        padding: "0 28px",
-        gap: 12,
-        transition: "all 0.3s ease",
-      }}>
+      <nav className={`ad-topbar ${isTransparent ? 'transparent' : ''}`}>
+        <div className="ad-topbar-left">
+          {/* Mobile menu toggle - hidden on desktop */}
+          <button 
+            className="ad-menu-toggle nav-hamburger"
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="Menu"
+          >
+            <i className={`bi bi-${menuOpen ? "x-lg" : "list"}`} />
+          </button>
 
-        {/* ── Logo ── */}
-        <div
-          onClick={() => navigate("/")}
-          style={{
-            display: "flex", alignItems: "center", gap: 10,
-            cursor: "pointer", flex: "0 0 auto",
-            textDecoration: "none",
-          }}
-        >
-          <div style={{
-            width: 36, height: 36,
-            background: logoBg,
-            border: logoBorder,
-            borderRadius: "var(--radius-sm)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#fff", fontSize: 16,
-            transition: "all 0.3s",
-            flexShrink: 0,
-          }}>
-            <i className="bi bi-bus-front-fill" />
+          {/* Logo */}
+          <div className="ad-logo" onClick={() => navigate("/")} style={{ cursor: 'pointer' }}>
+            <div className="ad-logo-icon">
+              <i className="bi bi-bus-front-fill" />
+            </div>
+            <div className="ad-logo-text">
+              <span className="ad-logo-main">MTN Sacco</span>
+              <span className="ad-logo-sub">MURANG'A TRANSPORT</span>
+            </div>
           </div>
-          <div>
-            <div style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 800,
-              fontSize: ".97rem",
-              color: logoTextColor,
-              lineHeight: 1,
-              transition: "color 0.3s",
-            }}>
-              MTN Sacco
-            </div>
-            <div style={{
-              fontSize: ".6rem",
-              fontWeight: 600,
-              color: logoSubColor,
-              letterSpacing: ".05em",
-              transition: "color 0.3s",
-            }}>
-              MURANG'A TRANSPORT
-            </div>
+
+          {/* Desktop Navigation Links */}
+          <div className="nav-desktop-links" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '32px' }}>
+            {navLinks.map(link => {
+              const isActive = location.pathname === link.path;
+              return (
+                <button
+                  key={link.path}
+                  onClick={() => navigate(link.path)}
+                  className={`ad-nav-item ${isActive ? 'active' : ''}`}
+                  style={{ 
+                    background: isTransparent && !isActive ? 'rgba(255,255,255,0.15)' : undefined,
+                    color: isTransparent && !isActive ? '#ffffff' : undefined
+                  }}
+                >
+                  <i className={`bi bi-${link.icon}`} />
+                  {link.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* ── Desktop Links ── */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 2,
-          flex: 1, justifyContent: "center",
-        }} className="nav-desktop-links">
-          {navLinks.map(link => {
-            const isActive = location.pathname === link.path;
-            return (
-              <a
-                key={link.path}
-                onClick={() => navigate(link.path)}
-                style={{
-                  padding: "7px 16px",
-                  borderRadius: "var(--radius-sm)",
-                  fontSize: ".88rem",
-                  fontWeight: 600,
-                  color: isActive ? activeColor : textColor,
-                  background: isActive ? activeBg : "transparent",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  textDecoration: "none",
-                  whiteSpace: "nowrap",
-                }}
-                onMouseEnter={e => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = isTransparent
-                      ? "rgba(255,255,255,0.15)" : "var(--gray-100)";
-                    e.currentTarget.style.color = isTransparent
-                      ? "#ffffff" : "var(--gray-900)";
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = textColor;
-                  }
-                }}
-              >
-                {link.label}
-              </a>
-            );
-          })}
-        </div>
-
-        {/* ── Right Actions ── */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" }}>
-
+        <div className="ad-topbar-right">
           {/* Track button */}
           <button
             onClick={() => navigate("/track/enter")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "7px",
-              padding: "7px 16px",
-              borderRadius: "var(--radius)",
-              fontFamily: "var(--font-body)",
-              fontSize: ".86rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              border: "1.5px solid",
-              transition: "all 0.3s",
-              whiteSpace: "nowrap",
-              lineHeight: 1,
-              background: isTransparent ? "rgba(255,255,255,0.15)" : "#ffffff",
-              color: isTransparent ? "#ffffff" : "var(--gray-700)",
-              borderColor: isTransparent ? "rgba(255,255,255,0.3)" : "var(--gray-200)",
-            }}
-            onMouseEnter={e => {
-              if (isTransparent) {
-                e.currentTarget.style.background = "rgba(255,255,255,0.25)";
-              }
-            }}
-            onMouseLeave={e => {
-              if (isTransparent) {
-                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-              }
-            }}
+            className={`btn ${isTransparent ? 'btn-outline-light' : 'btn-outline-primary'}`}
+            style={{ padding: '8px 16px' }}
           >
             <i className="bi bi-geo-alt" />
             <span className="nav-label-hide">Track</span>
@@ -200,184 +98,176 @@ export default function Navbar() {
           {/* Login button */}
           <button
             onClick={() => navigate("/admin/login")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "7px",
-              padding: "7px 16px",
-              borderRadius: "var(--radius)",
-              fontFamily: "var(--font-body)",
-              fontSize: ".86rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              border: "1.5px solid",
-              transition: "all 0.3s",
-              whiteSpace: "nowrap",
-              lineHeight: 1,
-              background: isTransparent ? "#ffffff" : "var(--primary)",
-              color: isTransparent ? "var(--primary)" : "#ffffff",
-              borderColor: isTransparent ? "#ffffff" : "var(--primary)",
-            }}
-            onMouseEnter={e => {
-              if (!isTransparent) {
-                e.currentTarget.style.background = "var(--primary-dark)";
-                e.currentTarget.style.borderColor = "var(--primary-dark)";
-              }
-            }}
-            onMouseLeave={e => {
-              if (!isTransparent) {
-                e.currentTarget.style.background = "var(--primary)";
-                e.currentTarget.style.borderColor = "var(--primary)";
-              }
-            }}
+            className={`btn ${isTransparent ? 'btn-light' : 'btn-primary'}`}
+            style={{ padding: '8px 16px' }}
           >
             <i className="bi bi-person-circle" />
             <span className="nav-label-hide">Login</span>
           </button>
-
-          {/* Mobile hamburger */}
-          <button
-            className="nav-hamburger"
-            style={{
-              display: "none",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 40,
-              height: 40,
-              borderRadius: "var(--radius)",
-              background: "transparent",
-              border: "none",
-              color: isTransparent ? "#ffffff" : "var(--gray-700)",
-              fontSize: "1.2rem",
-              cursor: "pointer",
-              transition: "all 0.3s",
-            }}
-            onClick={() => setMenuOpen(o => !o)}
-            aria-label="Menu"
-          >
-            <i className={`bi bi-${menuOpen ? "x-lg" : "list"}`} />
-          </button>
         </div>
       </nav>
 
-      {/* ── Mobile Menu ── */}
+      {/* Mobile Menu */}
       {menuOpen && (
         <div
           ref={menuRef}
-          style={{
-            position: "fixed",
-            top: "var(--header-height)",
-            left: 16, right: 16,
-            background: "#ffffff",
-            borderRadius: "var(--radius-lg)",
-            border: "1px solid var(--gray-200)",
-            boxShadow: "var(--shadow-xl)",
-            padding: "16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-            zIndex: 199,
-            animation: "slideDown 0.2s ease",
-          }}
+          className="mobile-menu"
         >
           {navLinks.map(link => (
-            <a
+            <button
               key={link.path}
               onClick={() => { navigate(link.path); setMenuOpen(false); }}
-              style={{
-                padding: "12px 16px",
-                borderRadius: "var(--radius)",
-                fontSize: ".95rem",
-                fontWeight: 600,
-                color: location.pathname === link.path ? "var(--primary)" : "var(--gray-700)",
-                background: location.pathname === link.path ? "var(--primary-light)" : "transparent",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                transition: "all 0.2s",
-                textDecoration: "none",
-              }}
-              onMouseEnter={e => {
-                if (location.pathname !== link.path) {
-                  e.currentTarget.style.background = "var(--gray-100)";
-                }
-              }}
-              onMouseLeave={e => {
-                if (location.pathname !== link.path) {
-                  e.currentTarget.style.background = "transparent";
-                }
-              }}
+              className={`mobile-menu-item ${location.pathname === link.path ? 'active' : ''}`}
             >
-              <i className={`bi bi-${
-                link.label === "Home" ? "house" : 
-                link.label === "About" ? "info-circle" : 
-                "telephone"
-              }`} style={{ fontSize: "1.1rem", opacity: 0.7 }} />
+              <i className={`bi bi-${link.icon}`} />
               {link.label}
-            </a>
+            </button>
           ))}
 
-          <div style={{ height: 1, background: "var(--gray-200)", margin: "8px 0" }} />
+          <div className="divider" />
 
-          <a
+          <button
             onClick={() => { navigate("/track/enter"); setMenuOpen(false); }}
-            style={{
-              padding: "12px 16px",
-              borderRadius: "var(--radius)",
-              fontSize: ".95rem",
-              fontWeight: 600,
-              color: "var(--gray-700)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              transition: "all 0.2s",
-              textDecoration: "none",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "var(--gray-100)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+            className="mobile-menu-item"
           >
-            <i className="bi bi-geo-alt" style={{ fontSize: "1.1rem", opacity: 0.7 }} />
+            <i className="bi bi-geo-alt" />
             Track Booking
-          </a>
+          </button>
 
-          <a
+          <button
             onClick={() => { navigate("/admin/login"); setMenuOpen(false); }}
-            style={{
-              padding: "12px 16px",
-              borderRadius: "var(--radius)",
-              fontSize: ".95rem",
-              fontWeight: 700,
-              color: "#ffffff",
-              background: "var(--primary)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              transition: "all 0.2s",
-              textDecoration: "none",
-              marginTop: 4,
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "var(--primary-dark)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "var(--primary)"; }}
+            className="mobile-menu-item mobile-menu-login"
           >
-            <i className="bi bi-person-circle" style={{ fontSize: "1.1rem" }} />
+            <i className="bi bi-person-circle" />
             Admin Login
-          </a>
+          </button>
         </div>
       )}
 
       <style>{`
-        @media (min-width: 769px) {
-          .nav-hamburger { display: none !important; }
+        /* Navbar custom styles */
+        .ad-topbar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 200;
+          transition: all 0.3s ease;
         }
-        @media (max-width: 768px) {
-          .nav-hamburger { display: flex !important; }
-          .nav-desktop-links { display: none !important; }
-          .nav-label-hide { display: none; }
+
+        .ad-topbar.transparent {
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(8px);
+          border-bottom: 1px solid rgba(255,255,255,0.15);
+          box-shadow: none;
         }
-        
+
+        .ad-topbar.transparent .ad-logo-main {
+          color: #ffffff;
+        }
+
+        .ad-topbar.transparent .ad-logo-sub {
+          color: rgba(255,255,255,0.7);
+        }
+
+        .ad-topbar.transparent .ad-logo-icon {
+          background: rgba(255,255,255,0.2);
+          border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .ad-topbar.transparent .ad-nav-item {
+          color: rgba(255,255,255,0.9);
+        }
+
+        .ad-topbar.transparent .ad-nav-item:hover {
+          background: rgba(255,255,255,0.15);
+          color: #ffffff;
+        }
+
+        .ad-topbar.transparent .ad-nav-item.active {
+          background: rgba(255,255,255,0.2);
+          color: #ffffff;
+          border-left: 3px solid #ffffff;
+        }
+
+        .ad-topbar.transparent .ad-nav-item i {
+          color: rgba(255,255,255,0.7);
+        }
+
+        .ad-topbar.transparent .ad-nav-item:hover i,
+        .ad-topbar.transparent .ad-nav-item.active i {
+          color: #ffffff;
+        }
+
+        /* Mobile menu styles */
+        .mobile-menu {
+          position: fixed;
+          top: var(--header-height);
+          left: 16px;
+          right: 16px;
+          background: #ffffff;
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--gray-200);
+          box-shadow: var(--shadow-xl);
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          z-index: 199;
+          animation: slideDown 0.2s ease;
+        }
+
+        .mobile-menu-item {
+          padding: 12px 16px;
+          border-radius: var(--radius);
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--gray-700);
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          transition: var(--transition);
+          width: 100%;
+          text-align: left;
+        }
+
+        .mobile-menu-item i {
+          font-size: 1.1rem;
+          opacity: 0.7;
+          color: var(--gray-500);
+        }
+
+        .mobile-menu-item:hover {
+          background: var(--gray-100);
+        }
+
+        .mobile-menu-item.active {
+          background: var(--primary-light);
+          color: var(--primary-dark);
+        }
+
+        .mobile-menu-item.active i {
+          color: var(--primary);
+        }
+
+        .mobile-menu-login {
+          background: var(--primary);
+          color: #ffffff;
+          margin-top: 4px;
+        }
+
+        .mobile-menu-login i {
+          color: #ffffff;
+          opacity: 1;
+        }
+
+        .mobile-menu-login:hover {
+          background: var(--primary-dark);
+        }
+
         @keyframes slideDown {
           from {
             opacity: 0;
@@ -388,7 +278,42 @@ export default function Navbar() {
             transform: translateY(0);
           }
         }
-        
+
+        /* Responsive */
+        @media (min-width: 769px) {
+          .nav-hamburger {
+            display: none !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .nav-hamburger {
+            display: flex !important;
+          }
+          
+          .nav-desktop-links {
+            display: none !important;
+          }
+          
+          .nav-label-hide {
+            display: none;
+          }
+          
+          .ad-topbar .btn {
+            padding: 8px 12px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .ad-topbar {
+            padding: 0 16px;
+          }
+          
+          .ad-logo-sub {
+            display: none;
+          }
+        }
+
         /* Add padding to body to account for fixed navbar */
         body {
           padding-top: var(--header-height);

@@ -21,7 +21,7 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
 
   useEffect(() => {
     if (selectedTown) setQuery(selectedTown.name);
-  }, [value, towns]);
+  }, [value, selectedTown]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -41,10 +41,10 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
   );
 
   return (
-    <div ref={ref} className="town-search-container">
-      <label className="town-search-label">{label}</label>
-      <div className={`town-search-input-wrapper ${focused ? 'focused' : ''}`}>
-        <i className="bi bi-geo-alt town-search-icon" />
+    <div className="form-group" ref={ref}>
+      <label className="form-label">{label}</label>
+      <div className="position-relative">
+        <i className="bi bi-geo-alt position-absolute" style={{ left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
         <input
           type="text"
           value={query}
@@ -53,12 +53,14 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
           autoComplete="off"
-          className="town-search-input"
+          className="form-control"
+          style={{ paddingLeft: '36px' }}
         />
         {value && (
           <button
             onMouseDown={e => { e.preventDefault(); onChange(""); setQuery(""); setOpen(true); }}
-            className="town-search-clear"
+            className="position-absolute"
+            style={{ right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray-400)' }}
           >
             <i className="bi bi-x" />
           </button>
@@ -71,11 +73,11 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
             <div
               key={town.id}
               onMouseDown={e => { e.preventDefault(); onChange(town.slug); setQuery(town.name); setOpen(false); }}
-              className={`town-search-item ${town.slug === value ? 'selected' : ''}`}
+              className={`town-search-item ${town.slug === value ? 'active' : ''}`}
             >
               <i className="bi bi-geo-alt" />
-              {town.name}
-              {town.slug === value && <i className="bi bi-check2" />}
+              <span className="flex-1">{town.name}</span>
+              {town.slug === value && <i className="bi bi-check2 text-primary" />}
             </div>
           ))}
         </div>
@@ -86,6 +88,61 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
           No towns matching "{query}"
         </div>
       )}
+
+      <style>{`
+        .town-search-dropdown {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0;
+          right: 0;
+          background: white;
+          border: 1px solid var(--gray-200);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow-lg);
+          z-index: 1000;
+          max-height: 200px;
+          overflow-y: auto;
+        }
+
+        .town-search-item {
+          padding: 12px 16px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          transition: var(--transition);
+        }
+
+        .town-search-item:hover {
+          background: var(--gray-50);
+        }
+
+        .town-search-item.active {
+          background: var(--primary-soft);
+          color: var(--primary-dark);
+          font-weight: 600;
+        }
+
+        .town-search-item i {
+          color: var(--gray-400);
+          font-size: 0.9rem;
+          width: 20px;
+        }
+
+        .town-search-empty {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0;
+          right: 0;
+          background: white;
+          border: 1px solid var(--gray-200);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow-lg);
+          padding: 16px;
+          text-align: center;
+          color: var(--gray-500);
+        }
+      `}</style>
     </div>
   );
 }
@@ -139,65 +196,53 @@ export default function Home() {
       title: "Choose Your Seat",
       desc: "Pick exactly where you sit — window, aisle, or front row. Live seat map updates in real time.",
       img: FEATURE_IMAGES[0],
-      iconBg: "var(--primary-light)",
-      iconColor: "var(--primary)",
     },
     {
       icon: "bi-phone",
       title: "M-Pesa STK Push",
       desc: "Pay instantly from your phone. Enter your number once and confirm on your handset — no app needed.",
       img: FEATURE_IMAGES[1],
-      iconBg: "#f0fdf4",
-      iconColor: "#15803d",
     },
     {
       icon: "bi-ticket-perforated",
       title: "Instant E-Ticket",
       desc: "Receive your booking confirmation the moment you pay. Track your journey status at any time.",
       img: FEATURE_IMAGES[2],
-      iconBg: "var(--warning-light)",
-      iconColor: "var(--warning)",
     },
   ];
 
   return (
-    <div className="home-page">
-
-      {/* ════════ HERO SECTION ════════ */}
-      <section className="home-hero">
-        <div className="home-hero-overlay" />
-        <img src={HERO_IMAGE} alt="MTN Sacco matatu transport" className="home-hero-bg" />
-        
-        <div className="home-hero-container">
-          <div className="home-hero-content">
-            <div className="home-hero-badge">
-              <span className="home-hero-badge-dot" />
-              <span>Murang'a County, Kenya</span>
+    <>
+      {/* ════════ HERO SECTION (from global CSS) ════════ */}
+      <section className="hero">
+        <div className="hero-bg" />
+        <div className="hero-container">
+          <div className="hero-content">
+            <div className="hero-badge">
+              <span className="hero-badge-dot" />
+              <span className="hero-badge-text">Murang'a County, Kenya</span>
             </div>
 
-            <h1 className="home-hero-title">
+            <h1 className="hero-title">
               Travel Smart.
               <span>Ride Confident.</span>
             </h1>
 
-            <p className="home-hero-description">
+            <p className="hero-description">
               Book your matatu seat in advance. Scheduled express trips and stage runs
               across Murang'a and beyond — secured with M-Pesa.
             </p>
 
-            <div className="home-hero-stats">
+            <div className="hero-stats">
               {stats.map(s => (
-                <div key={s.label} className="home-hero-stat">
-                  <i className={`bi ${s.icon}`} />
-                  <div>
-                    <div className="home-hero-stat-value">{s.value}</div>
-                    <div className="home-hero-stat-label">{s.label}</div>
-                  </div>
+                <div key={s.label} className="hero-stat">
+                  <span className="hero-stat-number">{s.value}</span>
+                  <span className="hero-stat-label">{s.label}</span>
                 </div>
               ))}
             </div>
 
-            <div className="home-hero-actions">
+            <div className="hero-cta">
               <button
                 onClick={() => document.getElementById("search-card")?.scrollIntoView({ behavior: "smooth" })}
                 className="btn btn-primary btn-lg"
@@ -214,97 +259,103 @@ export default function Home() {
           </div>
 
           {/* Search Card */}
-          <div className="home-search-card" id="search-card">
-            <div className="home-search-header">
-              <i className="bi bi-search" />
-              <div>
-                <h3>Find Your Seat</h3>
-                <p>Search express trips and stage runs</p>
-              </div>
-            </div>
+          <div className="hero-image" id="search-card">
+            <div className="hero-card">
+              <h3 className="hero-card-title">
+                <i className="bi bi-search me-2" />
+                Find Your Seat
+              </h3>
 
-            <form onSubmit={handleSearch}>
-              <div className="home-search-grid">
-                <TownSearch
-                  label="From"
-                  value={form.origin}
-                  onChange={v => setForm(f => ({ ...f, origin: v }))}
-                  towns={towns}
-                  excludeSlug={form.destination}
-                  placeholder="Origin town..."
-                />
-                
+              <form onSubmit={handleSearch} className="hero-search">
+                <div className="d-flex align-center gap-2">
+                  <div className="flex-1">
+                    <TownSearch
+                      label="From"
+                      value={form.origin}
+                      onChange={v => setForm(f => ({ ...f, origin: v }))}
+                      towns={towns}
+                      excludeSlug={form.destination}
+                      placeholder="Origin town..."
+                    />
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={swapLocations}
+                    className="btn btn-outline-primary"
+                    style={{ marginTop: '24px', padding: '8px 12px' }}
+                    disabled={!form.origin || !form.destination}
+                  >
+                    <i className="bi bi-arrow-left-right" />
+                  </button>
+
+                  <div className="flex-1">
+                    <TownSearch
+                      label="To"
+                      value={form.destination}
+                      onChange={v => setForm(f => ({ ...f, destination: v }))}
+                      towns={towns}
+                      excludeSlug={form.origin}
+                      placeholder="Destination..."
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    <i className="bi bi-calendar3 me-2" />
+                    Travel Date
+                  </label>
+                  <input
+                    type="date"
+                    value={form.date}
+                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                    min={new Date().toISOString().split("T")[0]}
+                    required
+                    className="form-control"
+                  />
+                </div>
+
                 <button
-                  type="button"
-                  onClick={swapLocations}
-                  className="home-search-swap"
-                  disabled={!form.origin || !form.destination}
+                  type="submit"
+                  disabled={loading || !form.origin || !form.destination}
+                  className="btn btn-primary w-100"
                 >
-                  <i className="bi bi-arrow-left-right" />
+                  {loading ? (
+                    <>
+                      <span className="spinner" />
+                      Searching...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-search" /> Search Seats
+                    </>
+                  )}
                 </button>
+              </form>
 
-                <TownSearch
-                  label="To"
-                  value={form.destination}
-                  onChange={v => setForm(f => ({ ...f, destination: v }))}
-                  towns={towns}
-                  excludeSlug={form.origin}
-                  placeholder="Destination..."
-                />
+              <div className="d-flex justify-between mt-4">
+                <button onClick={() => navigate("/track/enter")} className="btn btn-sm btn-outline-primary">
+                  <i className="bi bi-qr-code-scan me-1" /> Track
+                </button>
+                <button onClick={() => navigate("/about")} className="btn btn-sm btn-outline-primary">
+                  <i className="bi bi-info-circle me-1" /> About
+                </button>
+                <button onClick={() => navigate("/contact")} className="btn btn-sm btn-outline-primary">
+                  <i className="bi bi-telephone me-1" /> Contact
+                </button>
               </div>
-
-              <div className="home-search-date">
-                <label>
-                  <i className="bi bi-calendar3" /> Travel Date
-                </label>
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                  min={new Date().toISOString().split("T")[0]}
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading || !form.origin || !form.destination}
-                className="btn btn-primary btn-block"
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner spinner-sm" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-search" /> Search Seats
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="home-search-footer">
-              <button onClick={() => navigate("/track/enter")}>
-                <i className="bi bi-qr-code-scan" /> Track Booking
-              </button>
-              <button onClick={() => navigate("/about")}>
-                <i className="bi bi-info-circle" /> About MTN
-              </button>
-              <button onClick={() => navigate("/contact")}>
-                <i className="bi bi-telephone" /> Contact
-              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ════════ POPULAR ROUTES ════════ */}
-      <section className="home-routes">
+      {/* ════════ POPULAR ROUTES (from second Home page) ════════ */}
+      <section className="routes-section">
         <div className="container">
           <div className="section-header">
             <div className="section-badge">
-              <i className="bi bi-signpost-split" />
+              <i className="bi bi-signpost-split me-2" />
               Popular Routes
             </div>
             <h2 className="section-title">Where are you heading today?</h2>
@@ -325,32 +376,32 @@ export default function Home() {
                 }}
               >
                 <div className="route-header">
-                  <span className={`badge badge-${route.type}`}>
-                    <i className={`bi bi-${route.type === "express" ? "lightning-charge" : "bus-front"}`} />
+                  <span className={`badge badge-${route.type === 'express' ? 'success' : 'info'}`}>
+                    <i className={`bi bi-${route.type === "express" ? "lightning-charge" : "bus-front"} me-1`} />
                     {route.type === "express" ? "Express" : "Stage"}
                   </span>
-                  <span className="route-duration">
+                  <span className="route-meta-item">
                     <i className="bi bi-clock" /> {route.duration}
                   </span>
                 </div>
 
                 <div className="route-cities">
                   <span>{route.from}</span>
-                  <i className="bi bi-arrow-right" />
+                  <i className="bi bi-arrow-right mx-2" />
                   <span>{route.to}</span>
                 </div>
 
-                <div className="route-info">
-                  <div className="route-departures">
+                <div className="d-flex justify-between align-center mb-3">
+                  <div className="route-meta-item">
                     <i className="bi bi-calendar-check" />
                     {route.departures}
                   </div>
                   <div className="route-price">{route.fare}</div>
                 </div>
 
-                <div className="route-footer">
-                  <span>Book now</span>
-                  <i className="bi bi-arrow-right-short" />
+                <div className="d-flex align-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid var(--gray-200)' }}>
+                  <span className="text-primary fw-600">Book now</span>
+                  <i className="bi bi-arrow-right-short text-primary fs-4" />
                 </div>
               </div>
             ))}
@@ -358,12 +409,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════════ FEATURES ════════ */}
-      <section className="home-features">
+      {/* ════════ FEATURES (from second Home page) ════════ */}
+      <section className="features-section">
         <div className="container">
           <div className="section-header">
             <div className="section-badge">
-              <i className="bi bi-stars" />
+              <i className="bi bi-stars me-2" />
               Why MTN Sacco
             </div>
             <h2 className="section-title">A better way to travel</h2>
@@ -375,52 +426,44 @@ export default function Home() {
           <div className="features-grid">
             {features.map((f, i) => (
               <div key={i} className="feature-card">
-                <div className="feature-image">
-                  <img src={f.img} alt={f.title} />
-                  <div className="feature-image-overlay" />
+                <div className="feature-icon">
+                  <i className={`bi ${f.icon}`} />
                 </div>
-                <div className="feature-content">
-                  <div className="feature-icon" style={{ background: f.iconBg, color: f.iconColor }}>
-                    <i className={`bi ${f.icon}`} />
-                  </div>
-                  <h3>{f.title}</h3>
-                  <p>{f.desc}</p>
-                  <button className="feature-link">
-                    Learn more <i className="bi bi-arrow-right" />
-                  </button>
-                </div>
+                <h3 className="feature-title">{f.title}</h3>
+                <p className="feature-description">{f.desc}</p>
+                <button className="btn btn-outline-primary btn-sm mt-3">
+                  Learn more <i className="bi bi-arrow-right ms-1" />
+                </button>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ════════ CTA SECTION ════════ */}
-      <section className="home-cta">
-        <div className="container">
-          <div className="cta-content">
-            <div className="cta-icon">
-              <i className="bi bi-ticket-perforated" />
-            </div>
-            <h2>Already booked? Track your seat.</h2>
-            <p>
-              Enter your booking reference to check status, view your seat, 
-              and get all trip details instantly.
-            </p>
-            <button
-              onClick={() => navigate("/track/enter")}
-              className="btn btn-light btn-lg"
-            >
-              <i className="bi bi-geo-alt-fill" />
-              Track My Booking
-            </button>
+      {/* ════════ CTA SECTION (from second Home page) ════════ */}
+      <section className="cta-section">
+        <div className="cta-container">
+          <div className="cta-icon">
+            <i className="bi bi-ticket-perforated" />
           </div>
+          <h2 className="cta-title">Already booked? Track your seat.</h2>
+          <p className="cta-description">
+            Enter your booking reference to check status, view your seat, 
+            and get all trip details instantly.
+          </p>
+          <button
+            onClick={() => navigate("/track/enter")}
+            className="btn btn-light btn-lg"
+          >
+            <i className="bi bi-geo-alt-fill me-2" />
+            Track My Booking
+          </button>
         </div>
       </section>
 
-      {/* ════════ FOOTER ════════ */}
-      <footer className="home-footer">
-        <div className="container">
+      {/* ════════ FOOTER (from second Home page) ════════ */}
+      <footer className="footer">
+        <div className="footer-container">
           <div className="footer-grid">
             <div className="footer-brand">
               <div className="footer-logo">
@@ -428,11 +471,11 @@ export default function Home() {
                   <i className="bi bi-bus-front-fill" />
                 </div>
                 <div className="footer-logo-text">
-                  <span>MTN Sacco</span>
+                  MTN Sacco
                   <small>MURANG'A TRANSPORT NETWORK</small>
                 </div>
               </div>
-              <p>
+              <p className="footer-description">
                 Safe, affordable, and reliable matatu travel across Murang'a County and beyond.
               </p>
               <div className="footer-social">
@@ -451,9 +494,9 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="footer-links">
-              <h4>Quick Links</h4>
-              <ul>
+            <div>
+              <h4 className="footer-title">Quick Links</h4>
+              <ul className="footer-links">
                 <li><button onClick={() => navigate("/")}>Home</button></li>
                 <li><button onClick={() => navigate("/search")}>Search Trips</button></li>
                 <li><button onClick={() => navigate("/track/enter")}>Track Booking</button></li>
@@ -462,9 +505,9 @@ export default function Home() {
               </ul>
             </div>
 
-            <div className="footer-links">
-              <h4>Support</h4>
-              <ul>
+            <div>
+              <h4 className="footer-title">Support</h4>
+              <ul className="footer-links">
                 <li><button>FAQs</button></li>
                 <li><button>Terms & Conditions</button></li>
                 <li><button>Privacy Policy</button></li>
@@ -473,23 +516,23 @@ export default function Home() {
               </ul>
             </div>
 
-            <div className="footer-contact">
-              <h4>Contact Us</h4>
-              <ul>
+            <div>
+              <h4 className="footer-title">Contact Us</h4>
+              <ul className="footer-links">
                 <li>
-                  <i className="bi bi-telephone" />
+                  <i className="bi bi-telephone me-2" />
                   <span>+254 722 400 400</span>
                 </li>
                 <li>
-                  <i className="bi bi-envelope" />
+                  <i className="bi bi-envelope me-2" />
                   <span>info@mtnsacco.co.ke</span>
                 </li>
                 <li>
-                  <i className="bi bi-geo-alt" />
+                  <i className="bi bi-geo-alt me-2" />
                   <span>Murang'a Town, Kenya</span>
                 </li>
                 <li>
-                  <i className="bi bi-clock" />
+                  <i className="bi bi-clock me-2" />
                   <span>Open 24/7</span>
                 </li>
               </ul>
@@ -500,522 +543,11 @@ export default function Home() {
             <div>© {new Date().getFullYear()} MTN Sacco. All rights reserved.</div>
             <div className="footer-bottom-links">
               <span>Secured by M-Pesa</span>
-              <i className="bi bi-shield-check" />
+              <i className="bi bi-shield-check ms-2" />
             </div>
           </div>
         </div>
       </footer>
-
-      <style>{`
-        .home-page {
-          padding-top: var(--header-height);
-        }
-
-        /* Hero Section */
-        .home-hero {
-          position: relative;
-          min-height: 600px;
-          display: flex;
-          align-items: center;
-          overflow: hidden;
-        }
-
-        .home-hero-bg {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .home-hero-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            135deg,
-            rgba(0, 0, 0, 0.9) 0%,
-            rgba(0, 0, 0, 0.7) 50%,
-            rgba(0, 0, 0, 0.8) 100%
-          );
-          z-index: 1;
-        }
-
-        .home-hero-container {
-          position: relative;
-          z-index: 2;
-          max-width: 1280px;
-          margin: 0 auto;
-          padding: 0 32px;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 60px;
-          align-items: center;
-          width: 100%;
-        }
-
-        .home-hero-content {
-          color: white;
-        }
-
-        .home-hero-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(10px);
-          padding: 8px 16px;
-          border-radius: 100px;
-          margin-bottom: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .home-hero-badge-dot {
-          width: 6px;
-          height: 6px;
-          background: var(--primary-light);
-          border-radius: 50%;
-          animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
-        }
-
-        .home-hero-title {
-          font-size: 3.5rem;
-          font-weight: 800;
-          line-height: 1.2;
-          margin-bottom: 20px;
-          color: white;
-        }
-
-        .home-hero-title span {
-          color: var(--primary-light);
-          display: block;
-        }
-
-        .home-hero-description {
-          font-size: 1.1rem;
-          color: rgba(255, 255, 255, 0.8);
-          margin-bottom: 32px;
-          max-width: 500px;
-        }
-
-        .home-hero-stats {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 24px;
-          margin-bottom: 40px;
-        }
-
-        .home-hero-stat {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .home-hero-stat i {
-          font-size: 1.5rem;
-          color: var(--primary-light);
-          background: rgba(255, 255, 255, 0.1);
-          padding: 10px;
-          border-radius: var(--radius);
-        }
-
-        .home-hero-stat-value {
-          font-size: 1.5rem;
-          font-weight: 800;
-          color: white;
-          line-height: 1.2;
-        }
-
-        .home-hero-stat-label {
-          font-size: 0.85rem;
-          color: rgba(255, 255, 255, 0.6);
-        }
-
-        .home-hero-actions {
-          display: flex;
-          gap: 16px;
-          flex-wrap: wrap;
-        }
-
-        /* Search Card */
-        .home-search-card {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(20px);
-          border-radius: var(--radius-2xl);
-          padding: 32px;
-          box-shadow: var(--shadow-xl);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .home-search-header {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-bottom: 24px;
-        }
-
-        .home-search-header i {
-          width: 48px;
-          height: 48px;
-          background: var(--primary-light);
-          border-radius: var(--radius);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--primary);
-          font-size: 1.25rem;
-        }
-
-        .home-search-header h3 {
-          margin: 0 0 4px;
-          font-size: 1.25rem;
-        }
-
-        .home-search-header p {
-          margin: 0;
-          color: var(--gray-500);
-          font-size: 0.9rem;
-        }
-
-        .home-search-grid {
-          display: grid;
-          grid-template-columns: 1fr auto 1fr;
-          gap: 12px;
-          margin-bottom: 20px;
-        }
-
-        .home-search-swap {
-          width: 42px;
-          height: 42px;
-          border: 1px solid var(--gray-200);
-          border-radius: var(--radius);
-          background: white;
-          color: var(--gray-400);
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-top: 24px;
-        }
-
-        .home-search-swap:hover:not(:disabled) {
-          background: var(--primary-light);
-          color: var(--primary);
-          border-color: var(--primary);
-        }
-
-        .home-search-swap:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .home-search-date {
-          margin-bottom: 20px;
-        }
-
-        .home-search-date label {
-          display: block;
-          margin-bottom: 8px;
-          font-weight: 500;
-          color: var(--gray-700);
-        }
-
-        .home-search-date input {
-          width: 100%;
-          height: 48px;
-          padding: 0 16px;
-          border: 1px solid var(--gray-300);
-          border-radius: var(--radius);
-          font-family: var(--font-body);
-          transition: all 0.2s;
-        }
-
-        .home-search-date input:focus {
-          outline: none;
-          border-color: var(--primary);
-          box-shadow: 0 0 0 4px var(--primary-glow);
-        }
-
-        .home-search-footer {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 20px;
-          padding-top: 20px;
-          border-top: 1px solid var(--gray-200);
-        }
-
-        .home-search-footer button {
-          background: none;
-          border: none;
-          color: var(--gray-500);
-          font-size: 0.85rem;
-          font-weight: 500;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          transition: color 0.2s;
-          padding: 0;
-        }
-
-        .home-search-footer button:hover {
-          color: var(--primary);
-        }
-
-        /* Town Search Component */
-        .town-search-container {
-          position: relative;
-          width: 100%;
-        }
-
-        .town-search-label {
-          display: block;
-          margin-bottom: 6px;
-          font-size: 0.85rem;
-          font-weight: 500;
-          color: var(--gray-600);
-        }
-
-        .town-search-input-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-          border: 1px solid var(--gray-300);
-          border-radius: var(--radius);
-          transition: all 0.2s;
-          background: white;
-        }
-
-        .town-search-input-wrapper.focused {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 4px var(--primary-glow);
-        }
-
-        .town-search-icon {
-          position: absolute;
-          left: 12px;
-          color: var(--gray-400);
-          font-size: 0.9rem;
-        }
-
-        .town-search-input {
-          width: 100%;
-          height: 48px;
-          padding: 0 12px 0 36px;
-          border: none;
-          border-radius: var(--radius);
-          font-family: var(--font-body);
-          font-size: 0.95rem;
-        }
-
-        .town-search-input:focus {
-          outline: none;
-        }
-
-        .town-search-clear {
-          position: absolute;
-          right: 12px;
-          background: none;
-          border: none;
-          color: var(--gray-400);
-          cursor: pointer;
-          padding: 4px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .town-search-clear:hover {
-          color: var(--gray-600);
-        }
-
-        .town-search-dropdown {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          right: 0;
-          background: white;
-          border: 1px solid var(--gray-200);
-          border-radius: var(--radius);
-          box-shadow: var(--shadow-lg);
-          z-index: 100;
-          max-height: 200px;
-          overflow-y: auto;
-        }
-
-        .town-search-item {
-          padding: 12px 16px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          transition: all 0.2s;
-        }
-
-        .town-search-item:hover {
-          background: var(--gray-50);
-        }
-
-        .town-search-item.selected {
-          background: var(--primary-light);
-          color: var(--primary);
-          font-weight: 600;
-        }
-
-        .town-search-item i {
-          color: var(--gray-400);
-          font-size: 0.9rem;
-        }
-
-        .town-search-item .bi-check2 {
-          margin-left: auto;
-          color: var(--primary);
-        }
-
-        .town-search-empty {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          right: 0;
-          background: white;
-          border: 1px solid var(--gray-200);
-          border-radius: var(--radius);
-          box-shadow: var(--shadow-lg);
-          padding: 16px;
-          text-align: center;
-          color: var(--gray-500);
-        }
-
-        /* Button styles */
-        .btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 12px 24px;
-          border-radius: var(--radius);
-          font-weight: 600;
-          font-size: 0.95rem;
-          transition: all 0.2s;
-          cursor: pointer;
-          border: none;
-          outline: none;
-          line-height: 1;
-        }
-
-        .btn-lg {
-          padding: 16px 32px;
-          font-size: 1rem;
-        }
-
-        .btn-primary {
-          background: var(--primary);
-          color: white;
-          box-shadow: var(--shadow-green);
-        }
-
-        .btn-primary:hover {
-          background: var(--primary-dark);
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-lg);
-        }
-
-        .btn-outline-light {
-          background: transparent;
-          border: 1.5px solid rgba(255, 255, 255, 0.5);
-          color: white;
-        }
-
-        .btn-outline-light:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: white;
-          transform: translateY(-1px);
-        }
-
-        .btn-light {
-          background: white;
-          color: var(--primary-dark);
-          border: 1.5px solid white;
-        }
-
-        .btn-light:hover {
-          background: rgba(255, 255, 255, 0.9);
-          transform: translateY(-1px);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-block {
-          width: 100%;
-        }
-
-        /* Spinner */
-        .spinner {
-          width: 18px;
-          height: 18px;
-          border: 2px solid rgba(255, 255, 255, 0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 0.6s linear infinite;
-        }
-
-        .spinner-sm {
-          width: 14px;
-          height: 14px;
-          border-width: 2px;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-          .home-hero-container {
-            grid-template-columns: 1fr;
-            gap: 40px;
-          }
-          
-          .home-hero-title {
-            font-size: 2.5rem;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .home-hero-stats {
-            grid-template-columns: repeat(2, 1fr);
-          }
-          
-          .home-search-grid {
-            grid-template-columns: 1fr;
-          }
-          
-          .home-search-swap {
-            margin-top: 0;
-            width: 100%;
-          }
-          
-          .home-search-footer {
-            flex-direction: column;
-            gap: 12px;
-            align-items: flex-start;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .home-hero-actions {
-            flex-direction: column;
-          }
-          
-          .home-hero-actions .btn {
-            width: 100%;
-          }
-        }
-      `}</style>
-    </div>
+    </>
   );
 }
