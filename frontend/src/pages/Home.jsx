@@ -3,15 +3,14 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 
-// Unsplash SEO images - Kenyan/matatu themed
-const HERO_IMAGE = "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1600&q=80&fit=crop"; // bus/transport
+const HERO_IMAGE = "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1600&q=80&fit=crop";
 const FEATURE_IMAGES = [
-  "https://images.unsplash.com/photo-1570547255950-da99cfa46d6a?w=400&q=80&fit=crop", // seat
-  "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&q=80&fit=crop", // mobile payment
-  "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400&q=80&fit=crop", // ticket/confirm
+  "https://images.unsplash.com/photo-1570547255950-da99cfa46d6a?w=600&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&q=80&fit=crop",
+  "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600&q=80&fit=crop",
 ];
 
-// Combobox search component
+/* ─── Town Combobox (Improved) ─── */
 function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -41,75 +40,25 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
     t.name.toLowerCase().includes(query.toLowerCase())
   );
 
-  const handleSelect = (town) => {
-    onChange(town.slug);
-    setQuery(town.name);
-    setOpen(false);
-  };
-
-  const handleInputChange = (e) => {
-    setQuery(e.target.value);
-    setOpen(true);
-    if (!e.target.value) onChange("");
-  };
-
   return (
-    <div ref={ref} style={{ position: "relative" }}>
-      <label style={{
-        display: "block",
-        fontSize: ".72rem",
-        fontWeight: 700,
-        color: "var(--gray-500)",
-        textTransform: "uppercase",
-        letterSpacing: ".06em",
-        marginBottom: 6,
-      }}>
-        {label}
-      </label>
-      <div style={{
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
-        background: "#fff",
-        border: `2px solid ${focused ? "var(--primary)" : "var(--gray-200)"}`,
-        borderRadius: "var(--radius)",
-        transition: "border-color .15s, box-shadow .15s",
-        boxShadow: focused ? "0 0 0 3px rgba(37,99,235,.1)" : "none",
-      }}>
-        <i className="bi bi-search" style={{
-          position: "absolute", left: 12,
-          color: focused ? "var(--primary)" : "var(--gray-400)",
-          fontSize: ".88rem", pointerEvents: "none",
-          transition: "color .15s",
-        }} />
+    <div ref={ref} className="town-search-container">
+      <label className="town-search-label">{label}</label>
+      <div className={`town-search-input-wrapper ${focused ? 'focused' : ''}`}>
+        <i className="bi bi-geo-alt town-search-icon" />
         <input
           type="text"
           value={query}
-          onChange={handleInputChange}
+          onChange={e => { setQuery(e.target.value); setOpen(true); if (!e.target.value) onChange(""); }}
           onFocus={() => { setFocused(true); setOpen(true); }}
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
           autoComplete="off"
-          style={{
-            width: "100%",
-            padding: "11px 12px 11px 34px",
-            border: "none",
-            background: "transparent",
-            fontSize: ".9rem",
-            color: "var(--gray-800)",
-            fontFamily: "var(--font-body)",
-            outline: "none",
-            borderRadius: "var(--radius)",
-          }}
+          className="town-search-input"
         />
         {value && (
           <button
             onMouseDown={e => { e.preventDefault(); onChange(""); setQuery(""); setOpen(true); }}
-            style={{
-              background: "none", border: "none",
-              color: "var(--gray-400)", cursor: "pointer",
-              padding: "0 10px", fontSize: ".88rem",
-            }}
+            className="town-search-clear"
           >
             <i className="bi bi-x" />
           </button>
@@ -117,62 +66,23 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
       </div>
 
       {open && filtered.length > 0 && (
-        <div style={{
-          position: "absolute",
-          top: "calc(100% + 6px)",
-          left: 0, right: 0,
-          background: "#fff",
-          border: "1.5px solid var(--gray-200)",
-          borderRadius: "var(--radius)",
-          boxShadow: "var(--shadow-lg)",
-          zIndex: 300,
-          maxHeight: 200,
-          overflowY: "auto",
-          animation: "slideUp .12s ease",
-        }}>
+        <div className="town-search-dropdown">
           {filtered.map(town => (
             <div
               key={town.id}
-              onMouseDown={e => { e.preventDefault(); handleSelect(town); }}
-              style={{
-                padding: "10px 14px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontSize: ".88rem",
-                color: town.slug === value ? "var(--primary)" : "var(--gray-700)",
-                background: town.slug === value ? "var(--blue-50)" : "#fff",
-                fontWeight: town.slug === value ? 600 : 400,
-                transition: "background .1s",
-              }}
-              onMouseEnter={e => { if (town.slug !== value) e.currentTarget.style.background = "var(--gray-50)"; }}
-              onMouseLeave={e => { if (town.slug !== value) e.currentTarget.style.background = "#fff"; }}
+              onMouseDown={e => { e.preventDefault(); onChange(town.slug); setQuery(town.name); setOpen(false); }}
+              className={`town-search-item ${town.slug === value ? 'selected' : ''}`}
             >
-              <i className="bi bi-geo-alt" style={{ color: "var(--gray-400)", flexShrink: 0 }} />
+              <i className="bi bi-geo-alt" />
               {town.name}
-              {town.slug === value && <i className="bi bi-check2" style={{ marginLeft: "auto", color: "var(--primary)" }} />}
+              {town.slug === value && <i className="bi bi-check2" />}
             </div>
           ))}
         </div>
       )}
 
       {open && query.length > 1 && filtered.length === 0 && (
-        <div style={{
-          position: "absolute",
-          top: "calc(100% + 6px)",
-          left: 0, right: 0,
-          background: "#fff",
-          border: "1.5px solid var(--gray-200)",
-          borderRadius: "var(--radius)",
-          boxShadow: "var(--shadow-lg)",
-          zIndex: 300,
-          padding: "14px 16px",
-          fontSize: ".85rem",
-          color: "var(--gray-400)",
-          textAlign: "center",
-        }}>
-          <i className="bi bi-search" style={{ marginRight: 6 }} />
+        <div className="town-search-empty">
           No towns matching "{query}"
         </div>
       )}
@@ -180,6 +90,7 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
   );
 }
 
+/* ─── Main Home Component ─── */
 export default function Home() {
   const [towns, setTowns] = useState([]);
   const [form, setForm] = useState({
@@ -207,352 +118,239 @@ export default function Home() {
   };
 
   const stats = [
-    { icon: "bi-bus-front", value: "50+", label: "Matatus" },
-    { icon: "bi-people", value: "2K+", label: "Daily Riders" },
-    { icon: "bi-geo-alt", value: "12", label: "Routes" },
-    { icon: "bi-shield-check", value: "99%", label: "On Time" },
+    { value: "50+", label: "Matatus", icon: "bi-bus-front" },
+    { value: "2K+", label: "Daily Riders", icon: "bi-people" },
+    { value: "12",  label: "Routes", icon: "bi-signpost-split" },
+    { value: "99%", label: "On Time", icon: "bi-clock-history" },
+  ];
+
+  const popularRoutes = [
+    { from: "Murang'a", to: "Nairobi", duration: "2h 30m", fare: "KES 350", type: "express", departures: "15 daily" },
+    { from: "Murang'a", to: "Thika",   duration: "1h 30m", fare: "KES 200", type: "stage", departures: "25 daily" },
+    { from: "Murang'a", to: "Nyeri",   duration: "2h",     fare: "KES 300", type: "express", departures: "12 daily" },
+    { from: "Thika",    to: "Nairobi", duration: "1h",     fare: "KES 150", type: "stage", departures: "30 daily" },
+    { from: "Murang'a", to: "Embu",    duration: "3h",     fare: "KES 450", type: "express", departures: "8 daily" },
+    { from: "Nairobi",  to: "Murang'a", duration: "2h 30m", fare: "KES 350", type: "express", departures: "15 daily" },
   ];
 
   const features = [
     {
-      icon: "bi-grid-3x3",
+      icon: "bi-grid-3x3-gap",
       title: "Choose Your Seat",
-      desc: "Pick exactly where you sit — window, aisle, or front. Real-time seat map updates.",
+      desc: "Pick exactly where you sit — window, aisle, or front row. Live seat map updates in real time.",
       img: FEATURE_IMAGES[0],
-      color: "var(--blue-50)",
+      iconBg: "var(--primary-light)",
       iconColor: "var(--primary)",
     },
     {
       icon: "bi-phone",
       title: "M-Pesa STK Push",
-      desc: "Pay instantly from your phone. Enter amount once — no app downloads needed.",
+      desc: "Pay instantly from your phone. Enter your number once and confirm on your handset — no app needed.",
       img: FEATURE_IMAGES[1],
-      color: "var(--success-light)",
-      iconColor: "var(--success)",
+      iconBg: "#f0fdf4",
+      iconColor: "#15803d",
     },
     {
       icon: "bi-ticket-perforated",
       title: "Instant E-Ticket",
-      desc: "Receive your booking confirmation immediately. Track your booking anytime.",
+      desc: "Receive your booking confirmation the moment you pay. Track your journey status at any time.",
       img: FEATURE_IMAGES[2],
-      color: "var(--warning-light)",
+      iconBg: "var(--warning-light)",
       iconColor: "var(--warning)",
     },
   ];
 
-  const popularRoutes = [
-    { from: "Murang'a", to: "Nairobi", duration: "2h 30m", fare: "KES 350", type: "express" },
-    { from: "Murang'a", to: "Thika", duration: "1h 30m", fare: "KES 200", type: "stage" },
-    { from: "Murang'a", to: "Nyeri", duration: "2h", fare: "KES 300", type: "express" },
-    { from: "Thika", to: "Nairobi", duration: "1h", fare: "KES 150", type: "stage" },
-  ];
-
   return (
-    <div style={{ paddingTop: "var(--header-height)" }}>
+    <div className="home-page">
 
-      {/* ── Hero ── */}
-      <section style={{
-        position: "relative",
-        minHeight: "calc(100vh - var(--header-height))",
-        display: "flex",
-        alignItems: "center",
-        overflow: "hidden",
-        background: "#0f2027",
-      }}>
-        {/* Background Image */}
-        <img
-          src={HERO_IMAGE}
-          alt="MTN Sacco matatu transport Murang'a Kenya"
-          style={{
-            position: "absolute", inset: 0,
-            width: "100%", height: "100%",
-            objectFit: "cover",
-            opacity: .35,
-          }}
-        />
-
-        {/* Gradient overlay */}
-        <div style={{
-          position: "absolute", inset: 0,
-          background: "linear-gradient(135deg, rgba(30,58,138,.85) 0%, rgba(5,122,61,.7) 60%, rgba(0,0,0,.5) 100%)",
-        }} />
-
-        {/* Decorative circles */}
-        <div style={{
-          position: "absolute", top: "10%", right: "8%",
-          width: 300, height: 300,
-          border: "1px solid rgba(255,255,255,.08)",
-          borderRadius: "50%", pointerEvents: "none",
-        }} />
-        <div style={{
-          position: "absolute", top: "20%", right: "12%",
-          width: 180, height: 180,
-          border: "1px solid rgba(255,255,255,.06)",
-          borderRadius: "50%", pointerEvents: "none",
-        }} />
-
-        <div style={{
-          position: "relative", zIndex: 1,
-          width: "100%", maxWidth: 1100,
-          margin: "0 auto",
-          padding: "60px 24px",
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 48,
-          alignItems: "center",
-        }}
-          className="hero-grid"
-        >
-          {/* Left - Hero text */}
-          <div>
-            <div style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              background: "rgba(251,191,36,.15)",
-              border: "1px solid rgba(251,191,36,.3)",
-              borderRadius: 99,
-              padding: "4px 14px",
-              marginBottom: 20,
-            }}>
-              <i className="bi bi-geo-fill" style={{ color: "#fbbf24", fontSize: ".75rem" }} />
-              <span style={{ color: "#fbbf24", fontSize: ".75rem", fontWeight: 700, letterSpacing: ".08em" }}>
-                MURANG'A COUNTY, KENYA
-              </span>
+      {/* ════════ HERO SECTION ════════ */}
+      <section className="home-hero">
+        <div className="home-hero-overlay" />
+        <img src={HERO_IMAGE} alt="MTN Sacco matatu transport" className="home-hero-bg" />
+        
+        <div className="home-hero-container">
+          <div className="home-hero-content">
+            <div className="home-hero-badge">
+              <span className="home-hero-badge-dot" />
+              <span>Murang'a County, Kenya</span>
             </div>
 
-            <h1 style={{
-              color: "#fff",
-              fontSize: "clamp(32px, 5vw, 58px)",
-              fontWeight: 900,
-              lineHeight: 1.05,
-              margin: "0 0 16px",
-              letterSpacing: "-.02em",
-            }}>
-              Travel Smart.<br />
-              <span style={{
-                background: "linear-gradient(90deg, #fbbf24, #34d399)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}>
-                Ride Confident.
-              </span>
+            <h1 className="home-hero-title">
+              Travel Smart.
+              <span>Ride Confident.</span>
             </h1>
 
-            <p style={{
-              color: "rgba(255,255,255,.75)",
-              fontSize: "1.05rem",
-              lineHeight: 1.65,
-              margin: "0 0 28px",
-              maxWidth: 440,
-            }}>
-              Book your matatu seat in advance. Express scheduled trips and stage runs
-              across Murang'a County and beyond — secured with M-Pesa.
+            <p className="home-hero-description">
+              Book your matatu seat in advance. Scheduled express trips and stage runs
+              across Murang'a and beyond — secured with M-Pesa.
             </p>
 
-            {/* Stats strip */}
-            <div style={{
-              display: "flex",
-              gap: 24,
-              flexWrap: "wrap",
-            }}>
-              {stats.map(stat => (
-                <div key={stat.label} style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#fff" }}>{stat.value}</div>
-                  <div style={{ fontSize: ".72rem", color: "rgba(255,255,255,.55)", fontWeight: 600, letterSpacing: ".05em" }}>{stat.label}</div>
+            <div className="home-hero-stats">
+              {stats.map(s => (
+                <div key={s.label} className="home-hero-stat">
+                  <i className={`bi ${s.icon}`} />
+                  <div>
+                    <div className="home-hero-stat-value">{s.value}</div>
+                    <div className="home-hero-stat-label">{s.label}</div>
+                  </div>
                 </div>
               ))}
             </div>
+
+            <div className="home-hero-actions">
+              <button
+                onClick={() => document.getElementById("search-card")?.scrollIntoView({ behavior: "smooth" })}
+                className="btn btn-primary btn-lg"
+              >
+                <i className="bi bi-search" /> Book a Seat
+              </button>
+              <button
+                onClick={() => navigate("/track/enter")}
+                className="btn btn-outline-light btn-lg"
+              >
+                <i className="bi bi-geo-alt" /> Track Booking
+              </button>
+            </div>
           </div>
 
-          {/* Right - Search Card */}
-          <div>
-            <div style={{
-              background: "#fff",
-              borderRadius: "var(--radius-xl)",
-              padding: 28,
-              boxShadow: "var(--shadow-lg)",
-            }}>
-              <h2 style={{
-                margin: "0 0 6px",
-                fontSize: "1.05rem",
-                fontWeight: 800,
-                color: "var(--gray-900)",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}>
-                <i className="bi bi-search" style={{ color: "var(--primary)" }} />
-                Find Your Seat
-              </h2>
-              <p style={{ margin: "0 0 20px", fontSize: ".8rem", color: "var(--gray-400)" }}>
-                Search express trips and stage runs
-              </p>
-
-              <form onSubmit={handleSearch}>
-                {/* Origin / Destination */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 8, alignItems: "flex-end", marginBottom: 14 }}>
-                  <TownSearch
-                    label="From"
-                    value={form.origin}
-                    onChange={v => setForm(f => ({ ...f, origin: v }))}
-                    towns={towns}
-                    excludeSlug={form.destination}
-                    placeholder="Origin town..."
-                  />
-
-                  {/* Swap button */}
-                  <div style={{ paddingBottom: 2 }}>
-                    <button
-                      type="button"
-                      onClick={swapLocations}
-                      className="btn-ad btn-ad-ghost"
-                      style={{
-                        padding: "10px 10px",
-                        border: "1.5px solid var(--gray-200)",
-                        borderRadius: "var(--radius)",
-                        color: form.origin && form.destination ? "var(--primary)" : "var(--gray-300)",
-                        transition: "all .15s",
-                      }}
-                      title="Swap origin and destination"
-                    >
-                      <i className="bi bi-arrow-left-right" />
-                    </button>
-                  </div>
-
-                  <TownSearch
-                    label="To"
-                    value={form.destination}
-                    onChange={v => setForm(f => ({ ...f, destination: v }))}
-                    towns={towns}
-                    excludeSlug={form.origin}
-                    placeholder="Destination..."
-                  />
-                </div>
-
-                {/* Date */}
-                <div className="ad-form-group" style={{ marginBottom: 18 }}>
-                  <label className="ad-label">
-                    <i className="bi bi-calendar3" style={{ marginRight: 5 }} />
-                    Travel Date
-                  </label>
-                  <input
-                    type="date"
-                    value={form.date}
-                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                    min={new Date().toISOString().split("T")[0]}
-                    required
-                    className="ad-input"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading || !form.origin || !form.destination}
-                  className="btn-ad btn-ad-primary w-100"
-                  style={{ padding: "12px 20px", fontSize: ".95rem", justifyContent: "center", borderRadius: "var(--radius)" }}
-                >
-                  {loading
-                    ? <><span className="ad-spinner ad-spinner-sm ad-spinner-white" /> Searching...</>
-                    : <><i className="bi bi-search" /> Search Seats</>
-                  }
-                </button>
-              </form>
-
-              {/* Quick Links */}
-              <div style={{
-                marginTop: 14,
-                paddingTop: 14,
-                borderTop: "1px solid var(--gray-100)",
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: ".75rem",
-                color: "var(--gray-400)",
-              }}>
-                <span
-                  onClick={() => navigate("/track/enter")}
-                  style={{ cursor: "pointer", color: "var(--primary)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}
-                >
-                  <i className="bi bi-qr-code-scan" /> Track Booking
-                </span>
-                <span style={{ color: "var(--gray-300)" }}>|</span>
-                <span
-                  onClick={() => navigate("/about")}
-                  style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
-                >
-                  <i className="bi bi-info-circle" /> About MTN Sacco
-                </span>
-                <span style={{ color: "var(--gray-300)" }}>|</span>
-                <span
-                  onClick={() => navigate("/contact")}
-                  style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
-                >
-                  <i className="bi bi-telephone" /> Contact Us
-                </span>
+          {/* Search Card */}
+          <div className="home-search-card" id="search-card">
+            <div className="home-search-header">
+              <i className="bi bi-search" />
+              <div>
+                <h3>Find Your Seat</h3>
+                <p>Search express trips and stage runs</p>
               </div>
+            </div>
+
+            <form onSubmit={handleSearch}>
+              <div className="home-search-grid">
+                <TownSearch
+                  label="From"
+                  value={form.origin}
+                  onChange={v => setForm(f => ({ ...f, origin: v }))}
+                  towns={towns}
+                  excludeSlug={form.destination}
+                  placeholder="Origin town..."
+                />
+                
+                <button
+                  type="button"
+                  onClick={swapLocations}
+                  className="home-search-swap"
+                  disabled={!form.origin || !form.destination}
+                >
+                  <i className="bi bi-arrow-left-right" />
+                </button>
+
+                <TownSearch
+                  label="To"
+                  value={form.destination}
+                  onChange={v => setForm(f => ({ ...f, destination: v }))}
+                  towns={towns}
+                  excludeSlug={form.origin}
+                  placeholder="Destination..."
+                />
+              </div>
+
+              <div className="home-search-date">
+                <label>
+                  <i className="bi bi-calendar3" /> Travel Date
+                </label>
+                <input
+                  type="date"
+                  value={form.date}
+                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                  min={new Date().toISOString().split("T")[0]}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !form.origin || !form.destination}
+                className="btn btn-primary btn-block"
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner spinner-sm" />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-search" /> Search Seats
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="home-search-footer">
+              <button onClick={() => navigate("/track/enter")}>
+                <i className="bi bi-qr-code-scan" /> Track Booking
+              </button>
+              <button onClick={() => navigate("/about")}>
+                <i className="bi bi-info-circle" /> About MTN
+              </button>
+              <button onClick={() => navigate("/contact")}>
+                <i className="bi bi-telephone" /> Contact
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Popular Routes ── */}
-      <section style={{ background: "#fff", padding: "64px 24px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 40 }}>
-            <div className="ad-section-title" style={{ justifyContent: "center", display: "flex", marginBottom: 8 }}>
-              <i className="bi bi-signpost-split" style={{ marginRight: 6 }} />
+      {/* ════════ POPULAR ROUTES ════════ */}
+      <section className="home-routes">
+        <div className="container">
+          <div className="section-header">
+            <div className="section-badge">
+              <i className="bi bi-signpost-split" />
               Popular Routes
             </div>
-            <h2 style={{ fontSize: "clamp(22px, 3vw, 32px)", fontWeight: 800, color: "var(--gray-900)", margin: 0 }}>
-              Where are you heading today?
-            </h2>
+            <h2 className="section-title">Where are you heading today?</h2>
+            <p className="section-description">
+              Most traveled routes by our passengers
+            </p>
           </div>
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-            gap: 16,
-          }}>
+          <div className="routes-grid">
             {popularRoutes.map((route, i) => (
               <div
                 key={i}
+                className="route-card"
                 onClick={() => {
-                  const originSlug = route.from.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
-                  const destSlug = route.to.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
-                  const today = new Date().toISOString().split("T")[0];
-                  navigate(`/search?origin=${originSlug}&destination=${destSlug}&date=${today}`);
+                  const originSlug = route.from.toLowerCase().replace(/[^a-z0-9]/g, "-");
+                  const destSlug = route.to.toLowerCase().replace(/[^a-z0-9]/g, "-");
+                  navigate(`/search?origin=${originSlug}&destination=${destSlug}&date=${new Date().toISOString().split("T")[0]}`);
                 }}
-                className="ad-card"
-                style={{
-                  padding: 20,
-                  cursor: "pointer",
-                  transition: "transform .15s, box-shadow .15s",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "var(--shadow)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "var(--shadow-sm)"; }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <div className="route-header">
                   <span className={`badge badge-${route.type}`}>
-                    <i className={`bi bi-${route.type === "express" ? "lightning-charge" : "geo-alt"}`} />
+                    <i className={`bi bi-${route.type === "express" ? "lightning-charge" : "bus-front"}`} />
                     {route.type === "express" ? "Express" : "Stage"}
                   </span>
-                  <span style={{ fontSize: ".72rem", color: "var(--gray-400)" }}>
-                    <i className="bi bi-clock" style={{ marginRight: 3 }} />
-                    {route.duration}
+                  <span className="route-duration">
+                    <i className="bi bi-clock" /> {route.duration}
                   </span>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  <div style={{ fontWeight: 800, fontSize: "1rem", color: "var(--gray-900)" }}>{route.from}</div>
-                  <i className="bi bi-arrow-right" style={{ color: "var(--primary)", fontSize: ".9rem" }} />
-                  <div style={{ fontWeight: 800, fontSize: "1rem", color: "var(--gray-900)" }}>{route.to}</div>
+                <div className="route-cities">
+                  <span>{route.from}</span>
+                  <i className="bi bi-arrow-right" />
+                  <span>{route.to}</span>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: 800, fontSize: "1.1rem", color: "var(--success)" }}>{route.fare}</span>
-                  <span style={{ fontSize: ".75rem", color: "var(--primary)", fontWeight: 600 }}>
-                    Book now <i className="bi bi-arrow-right-short" />
-                  </span>
+                <div className="route-info">
+                  <div className="route-departures">
+                    <i className="bi bi-calendar-check" />
+                    {route.departures}
+                  </div>
+                  <div className="route-price">{route.fare}</div>
+                </div>
+
+                <div className="route-footer">
+                  <span>Book now</span>
+                  <i className="bi bi-arrow-right-short" />
                 </div>
               </div>
             ))}
@@ -560,52 +358,36 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Features ── */}
-      <section style={{ background: "var(--gray-50)", padding: "64px 24px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 40 }}>
-            <div className="ad-section-title" style={{ justifyContent: "center", display: "flex", marginBottom: 8 }}>
-              <i className="bi bi-stars" style={{ marginRight: 6 }} />
+      {/* ════════ FEATURES ════════ */}
+      <section className="home-features">
+        <div className="container">
+          <div className="section-header">
+            <div className="section-badge">
+              <i className="bi bi-stars" />
               Why MTN Sacco
             </div>
-            <h2 style={{ fontSize: "clamp(22px, 3vw, 32px)", fontWeight: 800, color: "var(--gray-900)", margin: 0 }}>
-              A better way to travel
-            </h2>
+            <h2 className="section-title">A better way to travel</h2>
+            <p className="section-description">
+              Experience the future of matatu travel with our modern features
+            </p>
           </div>
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            gap: 24,
-          }}>
+          <div className="features-grid">
             {features.map((f, i) => (
-              <div key={i} className="ad-card" style={{ overflow: "hidden" }}>
-                {/* Feature Image */}
-                <div style={{ height: 160, overflow: "hidden", position: "relative" }}>
-                  <img
-                    src={f.img}
-                    alt={f.title}
-                    style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform .4s" }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.05)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
-                  />
-                  <div style={{
-                    position: "absolute", inset: 0,
-                    background: "linear-gradient(to top, rgba(0,0,0,.4) 0%, transparent 50%)",
-                  }} />
+              <div key={i} className="feature-card">
+                <div className="feature-image">
+                  <img src={f.img} alt={f.title} />
+                  <div className="feature-image-overlay" />
                 </div>
-                <div style={{ padding: "20px 20px 22px" }}>
-                  <div style={{
-                    width: 38, height: 38,
-                    background: f.color,
-                    borderRadius: "var(--radius-sm)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    marginBottom: 12,
-                  }}>
-                    <i className={`bi ${f.icon}`} style={{ color: f.iconColor, fontSize: "1.1rem" }} />
+                <div className="feature-content">
+                  <div className="feature-icon" style={{ background: f.iconBg, color: f.iconColor }}>
+                    <i className={`bi ${f.icon}`} />
                   </div>
-                  <h3 style={{ fontSize: ".97rem", fontWeight: 700, color: "var(--gray-900)", margin: "0 0 6px" }}>{f.title}</h3>
-                  <p style={{ fontSize: ".84rem", color: "var(--gray-500)", margin: 0, lineHeight: 1.6 }}>{f.desc}</p>
+                  <h3>{f.title}</h3>
+                  <p>{f.desc}</p>
+                  <button className="feature-link">
+                    Learn more <i className="bi bi-arrow-right" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -613,134 +395,624 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── CTA Banner ── */}
-      <section style={{
-        background: "linear-gradient(135deg, var(--blue-800) 0%, var(--blue-600) 100%)",
-        padding: "64px 24px",
-        textAlign: "center",
-        position: "relative",
-        overflow: "hidden",
-      }}>
-        <div style={{
-          position: "absolute", top: "-30%", left: "50%",
-          width: 500, height: 500,
-          background: "radial-gradient(circle, rgba(255,255,255,.07) 0%, transparent 70%)",
-          transform: "translateX(-50%)",
-          pointerEvents: "none",
-        }} />
-        <div style={{ position: "relative", maxWidth: 600, margin: "0 auto" }}>
-          <i className="bi bi-ticket-perforated" style={{ fontSize: "2.5rem", color: "rgba(255,255,255,.6)", display: "block", marginBottom: 16 }} />
-          <h2 style={{ fontSize: "clamp(24px, 4vw, 38px)", fontWeight: 900, color: "#fff", margin: "0 0 12px" }}>
-            Already booked? Track your seat.
-          </h2>
-          <p style={{ color: "rgba(255,255,255,.7)", fontSize: "1rem", margin: "0 0 28px" }}>
-            Enter your booking reference to check status, view your seat, and get trip details.
-          </p>
-          <button
-            onClick={() => navigate("/track/enter")}
-            className="btn-ad btn-ad-lg"
-            style={{
-              background: "#fff",
-              color: "var(--primary)",
-              borderColor: "#fff",
-              fontWeight: 800,
-            }}
-          >
-            <i className="bi bi-geo-alt-fill" />
-            Track My Booking
-          </button>
+      {/* ════════ CTA SECTION ════════ */}
+      <section className="home-cta">
+        <div className="container">
+          <div className="cta-content">
+            <div className="cta-icon">
+              <i className="bi bi-ticket-perforated" />
+            </div>
+            <h2>Already booked? Track your seat.</h2>
+            <p>
+              Enter your booking reference to check status, view your seat, 
+              and get all trip details instantly.
+            </p>
+            <button
+              onClick={() => navigate("/track/enter")}
+              className="btn btn-light btn-lg"
+            >
+              <i className="bi bi-geo-alt-fill" />
+              Track My Booking
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer style={{
-        background: "var(--gray-900)",
-        color: "rgba(255,255,255,.6)",
-        padding: "40px 24px 24px",
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-            gap: 32,
-            marginBottom: 32,
-          }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                <div style={{
-                  width: 32, height: 32,
-                  background: "var(--primary)",
-                  borderRadius: 6,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "#fff", fontSize: "1rem",
-                }}>
+      {/* ════════ FOOTER ════════ */}
+      <footer className="home-footer">
+        <div className="container">
+          <div className="footer-grid">
+            <div className="footer-brand">
+              <div className="footer-logo">
+                <div className="footer-logo-icon">
                   <i className="bi bi-bus-front-fill" />
                 </div>
-                <span style={{ color: "#fff", fontWeight: 800 }}>MTN Sacco</span>
+                <div className="footer-logo-text">
+                  <span>MTN Sacco</span>
+                  <small>MURANG'A TRANSPORT NETWORK</small>
+                </div>
               </div>
-              <p style={{ fontSize: ".8rem", lineHeight: 1.65, margin: 0 }}>
-                Murang'a Transport Network — safe, affordable, and reliable matatu travel across Murang'a County.
+              <p>
+                Safe, affordable, and reliable matatu travel across Murang'a County and beyond.
               </p>
+              <div className="footer-social">
+                <a href="#" className="footer-social-link">
+                  <i className="bi bi-facebook" />
+                </a>
+                <a href="#" className="footer-social-link">
+                  <i className="bi bi-twitter-x" />
+                </a>
+                <a href="#" className="footer-social-link">
+                  <i className="bi bi-instagram" />
+                </a>
+                <a href="#" className="footer-social-link">
+                  <i className="bi bi-whatsapp" />
+                </a>
+              </div>
             </div>
 
-            <div>
-              <div style={{ color: "#fff", fontWeight: 700, fontSize: ".85rem", marginBottom: 12 }}>Quick Links</div>
-              {[
-                { label: "Home", path: "/" },
-                { label: "Search Trips", path: "/search" },
-                { label: "Track Booking", path: "/track/enter" },
-                { label: "About", path: "/about" },
-                { label: "Contact", path: "/contact" },
-              ].map(link => (
-                <div key={link.path} style={{ marginBottom: 7 }}>
-                  <a
-                    onClick={() => navigate(link.path)}
-                    style={{ cursor: "pointer", fontSize: ".82rem", color: "rgba(255,255,255,.55)", transition: "color .15s" }}
-                    onMouseEnter={e => { e.currentTarget.style.color = "#fff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,.55)"; }}
-                  >
-                    <i className="bi bi-chevron-right" style={{ fontSize: ".65rem", marginRight: 4 }} />
-                    {link.label}
-                  </a>
-                </div>
-              ))}
+            <div className="footer-links">
+              <h4>Quick Links</h4>
+              <ul>
+                <li><button onClick={() => navigate("/")}>Home</button></li>
+                <li><button onClick={() => navigate("/search")}>Search Trips</button></li>
+                <li><button onClick={() => navigate("/track/enter")}>Track Booking</button></li>
+                <li><button onClick={() => navigate("/about")}>About Us</button></li>
+                <li><button onClick={() => navigate("/contact")}>Contact</button></li>
+              </ul>
             </div>
 
-            <div>
-              <div style={{ color: "#fff", fontWeight: 700, fontSize: ".85rem", marginBottom: 12 }}>Contact</div>
-              {[
-                { icon: "bi-telephone", text: "+254 722 400 400" },
-                { icon: "bi-envelope", text: "info@mtnsacco.co.ke" },
-                { icon: "bi-geo-alt", text: "Murang'a Town, Kenya" },
-              ].map(item => (
-                <div key={item.text} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, fontSize: ".82rem" }}>
-                  <i className={`bi ${item.icon}`} style={{ color: "var(--primary)", flexShrink: 0 }} />
-                  {item.text}
-                </div>
-              ))}
+            <div className="footer-links">
+              <h4>Support</h4>
+              <ul>
+                <li><button>FAQs</button></li>
+                <li><button>Terms & Conditions</button></li>
+                <li><button>Privacy Policy</button></li>
+                <li><button>Refund Policy</button></li>
+                <li><button>Help Center</button></li>
+              </ul>
+            </div>
+
+            <div className="footer-contact">
+              <h4>Contact Us</h4>
+              <ul>
+                <li>
+                  <i className="bi bi-telephone" />
+                  <span>+254 722 400 400</span>
+                </li>
+                <li>
+                  <i className="bi bi-envelope" />
+                  <span>info@mtnsacco.co.ke</span>
+                </li>
+                <li>
+                  <i className="bi bi-geo-alt" />
+                  <span>Murang'a Town, Kenya</span>
+                </li>
+                <li>
+                  <i className="bi bi-clock" />
+                  <span>Open 24/7</span>
+                </li>
+              </ul>
             </div>
           </div>
 
-          <div style={{
-            borderTop: "1px solid rgba(255,255,255,.08)",
-            paddingTop: 20,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 8,
-            fontSize: ".75rem",
-          }}>
-            <span>© {new Date().getFullYear()} MTN Sacco. All rights reserved.</span>
-            <span>Powered by M-Pesa <i className="bi bi-heart-fill" style={{ color: "var(--danger)", fontSize: ".65rem" }} /></span>
+          <div className="footer-bottom">
+            <div>© {new Date().getFullYear()} MTN Sacco. All rights reserved.</div>
+            <div className="footer-bottom-links">
+              <span>Secured by M-Pesa</span>
+              <i className="bi bi-shield-check" />
+            </div>
           </div>
         </div>
       </footer>
 
       <style>{`
+        .home-page {
+          padding-top: var(--header-height);
+        }
+
+        /* Hero Section */
+        .home-hero {
+          position: relative;
+          min-height: 600px;
+          display: flex;
+          align-items: center;
+          overflow: hidden;
+        }
+
+        .home-hero-bg {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .home-hero-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            135deg,
+            rgba(0, 0, 0, 0.9) 0%,
+            rgba(0, 0, 0, 0.7) 50%,
+            rgba(0, 0, 0, 0.8) 100%
+          );
+          z-index: 1;
+        }
+
+        .home-hero-container {
+          position: relative;
+          z-index: 2;
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 0 32px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 60px;
+          align-items: center;
+          width: 100%;
+        }
+
+        .home-hero-content {
+          color: white;
+        }
+
+        .home-hero-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          padding: 8px 16px;
+          border-radius: 100px;
+          margin-bottom: 24px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .home-hero-badge-dot {
+          width: 6px;
+          height: 6px;
+          background: var(--primary-light);
+          border-radius: 50%;
+          animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+
+        .home-hero-title {
+          font-size: 3.5rem;
+          font-weight: 800;
+          line-height: 1.2;
+          margin-bottom: 20px;
+          color: white;
+        }
+
+        .home-hero-title span {
+          color: var(--primary-light);
+          display: block;
+        }
+
+        .home-hero-description {
+          font-size: 1.1rem;
+          color: rgba(255, 255, 255, 0.8);
+          margin-bottom: 32px;
+          max-width: 500px;
+        }
+
+        .home-hero-stats {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 24px;
+          margin-bottom: 40px;
+        }
+
+        .home-hero-stat {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .home-hero-stat i {
+          font-size: 1.5rem;
+          color: var(--primary-light);
+          background: rgba(255, 255, 255, 0.1);
+          padding: 10px;
+          border-radius: var(--radius);
+        }
+
+        .home-hero-stat-value {
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: white;
+          line-height: 1.2;
+        }
+
+        .home-hero-stat-label {
+          font-size: 0.85rem;
+          color: rgba(255, 255, 255, 0.6);
+        }
+
+        .home-hero-actions {
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        /* Search Card */
+        .home-search-card {
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(20px);
+          border-radius: var(--radius-2xl);
+          padding: 32px;
+          box-shadow: var(--shadow-xl);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .home-search-header {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+
+        .home-search-header i {
+          width: 48px;
+          height: 48px;
+          background: var(--primary-light);
+          border-radius: var(--radius);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--primary);
+          font-size: 1.25rem;
+        }
+
+        .home-search-header h3 {
+          margin: 0 0 4px;
+          font-size: 1.25rem;
+        }
+
+        .home-search-header p {
+          margin: 0;
+          color: var(--gray-500);
+          font-size: 0.9rem;
+        }
+
+        .home-search-grid {
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+
+        .home-search-swap {
+          width: 42px;
+          height: 42px;
+          border: 1px solid var(--gray-200);
+          border-radius: var(--radius);
+          background: white;
+          color: var(--gray-400);
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: 24px;
+        }
+
+        .home-search-swap:hover:not(:disabled) {
+          background: var(--primary-light);
+          color: var(--primary);
+          border-color: var(--primary);
+        }
+
+        .home-search-swap:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .home-search-date {
+          margin-bottom: 20px;
+        }
+
+        .home-search-date label {
+          display: block;
+          margin-bottom: 8px;
+          font-weight: 500;
+          color: var(--gray-700);
+        }
+
+        .home-search-date input {
+          width: 100%;
+          height: 48px;
+          padding: 0 16px;
+          border: 1px solid var(--gray-300);
+          border-radius: var(--radius);
+          font-family: var(--font-body);
+          transition: all 0.2s;
+        }
+
+        .home-search-date input:focus {
+          outline: none;
+          border-color: var(--primary);
+          box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+
+        .home-search-footer {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 20px;
+          padding-top: 20px;
+          border-top: 1px solid var(--gray-200);
+        }
+
+        .home-search-footer button {
+          background: none;
+          border: none;
+          color: var(--gray-500);
+          font-size: 0.85rem;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: color 0.2s;
+          padding: 0;
+        }
+
+        .home-search-footer button:hover {
+          color: var(--primary);
+        }
+
+        /* Town Search Component */
+        .town-search-container {
+          position: relative;
+          width: 100%;
+        }
+
+        .town-search-label {
+          display: block;
+          margin-bottom: 6px;
+          font-size: 0.85rem;
+          font-weight: 500;
+          color: var(--gray-600);
+        }
+
+        .town-search-input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          border: 1px solid var(--gray-300);
+          border-radius: var(--radius);
+          transition: all 0.2s;
+          background: white;
+        }
+
+        .town-search-input-wrapper.focused {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+
+        .town-search-icon {
+          position: absolute;
+          left: 12px;
+          color: var(--gray-400);
+          font-size: 0.9rem;
+        }
+
+        .town-search-input {
+          width: 100%;
+          height: 48px;
+          padding: 0 12px 0 36px;
+          border: none;
+          border-radius: var(--radius);
+          font-family: var(--font-body);
+          font-size: 0.95rem;
+        }
+
+        .town-search-input:focus {
+          outline: none;
+        }
+
+        .town-search-clear {
+          position: absolute;
+          right: 12px;
+          background: none;
+          border: none;
+          color: var(--gray-400);
+          cursor: pointer;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .town-search-clear:hover {
+          color: var(--gray-600);
+        }
+
+        .town-search-dropdown {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0;
+          right: 0;
+          background: white;
+          border: 1px solid var(--gray-200);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow-lg);
+          z-index: 100;
+          max-height: 200px;
+          overflow-y: auto;
+        }
+
+        .town-search-item {
+          padding: 12px 16px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          transition: all 0.2s;
+        }
+
+        .town-search-item:hover {
+          background: var(--gray-50);
+        }
+
+        .town-search-item.selected {
+          background: var(--primary-light);
+          color: var(--primary);
+          font-weight: 600;
+        }
+
+        .town-search-item i {
+          color: var(--gray-400);
+          font-size: 0.9rem;
+        }
+
+        .town-search-item .bi-check2 {
+          margin-left: auto;
+          color: var(--primary);
+        }
+
+        .town-search-empty {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 0;
+          right: 0;
+          background: white;
+          border: 1px solid var(--gray-200);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow-lg);
+          padding: 16px;
+          text-align: center;
+          color: var(--gray-500);
+        }
+
+        /* Button styles */
+        .btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 12px 24px;
+          border-radius: var(--radius);
+          font-weight: 600;
+          font-size: 0.95rem;
+          transition: all 0.2s;
+          cursor: pointer;
+          border: none;
+          outline: none;
+          line-height: 1;
+        }
+
+        .btn-lg {
+          padding: 16px 32px;
+          font-size: 1rem;
+        }
+
+        .btn-primary {
+          background: var(--primary);
+          color: white;
+          box-shadow: var(--shadow-green);
+        }
+
+        .btn-primary:hover {
+          background: var(--primary-dark);
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-lg);
+        }
+
+        .btn-outline-light {
+          background: transparent;
+          border: 1.5px solid rgba(255, 255, 255, 0.5);
+          color: white;
+        }
+
+        .btn-outline-light:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: white;
+          transform: translateY(-1px);
+        }
+
+        .btn-light {
+          background: white;
+          color: var(--primary-dark);
+          border: 1.5px solid white;
+        }
+
+        .btn-light:hover {
+          background: rgba(255, 255, 255, 0.9);
+          transform: translateY(-1px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-block {
+          width: 100%;
+        }
+
+        /* Spinner */
+        .spinner {
+          width: 18px;
+          height: 18px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-top-color: white;
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite;
+        }
+
+        .spinner-sm {
+          width: 14px;
+          height: 14px;
+          border-width: 2px;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+          .home-hero-container {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+          
+          .home-hero-title {
+            font-size: 2.5rem;
+          }
+        }
+
         @media (max-width: 768px) {
-          .hero-grid {
-            grid-template-columns: 1fr !important;
+          .home-hero-stats {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          
+          .home-search-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .home-search-swap {
+            margin-top: 0;
+            width: 100%;
+          }
+          
+          .home-search-footer {
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .home-hero-actions {
+            flex-direction: column;
+          }
+          
+          .home-hero-actions .btn {
+            width: 100%;
           }
         }
       `}</style>

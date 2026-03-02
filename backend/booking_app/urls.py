@@ -10,7 +10,9 @@ from .views import (
     # Payments
     PaymentInitiateView, PaymentCallbackView, PaymentStatusView,
     # Seat locking
-    SeatLockView, SeatStatusView, SeatLockCleanupView,
+    TripSeatLockView, TripSeatStatusView,
+    StageRunSeatLockView, StageRunSeatStatusView,
+    SeatLockCleanupView,
     # Admin auth
     AdminLoginView, AdminMeView, AdminUserViewSet,
     # Admin dashboard
@@ -40,15 +42,15 @@ public_router.register(r'bookings',     BookingViewSet,    basename='booking')
 
 # ── Admin router ──────────────────────────────────────────────────────────────
 admin_router = DefaultRouter()
-admin_router.register(r'users',       AdminUserViewSet,    basename='admin-users')
-admin_router.register(r'towns',       AdminTownViewSet,    basename='admin-towns')
-admin_router.register(r'stages',      AdminStageViewSet,   basename='admin-stages')
-admin_router.register(r'routes',      AdminRouteViewSet,   basename='admin-routes')
-admin_router.register(r'matatus',     AdminMatutuViewSet,  basename='admin-matatus')
-admin_router.register(r'trips',       AdminTripViewSet,    basename='admin-trips')
-admin_router.register(r'stage-runs',  AdminStageRunViewSet,basename='admin-stage-runs')
-admin_router.register(r'bookings',    AdminBookingViewSet, basename='admin-bookings')
-admin_router.register(r'drivers',     AdminDriverViewSet,  basename='admin-drivers')
+admin_router.register(r'users',       AdminUserViewSet,     basename='admin-users')
+admin_router.register(r'towns',       AdminTownViewSet,     basename='admin-towns')
+admin_router.register(r'stages',      AdminStageViewSet,    basename='admin-stages')
+admin_router.register(r'routes',      AdminRouteViewSet,    basename='admin-routes')
+admin_router.register(r'matatus',     AdminMatutuViewSet,   basename='admin-matatus')
+admin_router.register(r'trips',       AdminTripViewSet,     basename='admin-trips')
+admin_router.register(r'stage-runs',  AdminStageRunViewSet, basename='admin-stage-runs')
+admin_router.register(r'bookings',    AdminBookingViewSet,  basename='admin-bookings')
+admin_router.register(r'drivers',     AdminDriverViewSet,   basename='admin-drivers')
 
 # ── Admin URL patterns ────────────────────────────────────────────────────────
 admin_urlpatterns = [
@@ -101,17 +103,17 @@ urlpatterns = [
     path('payments/status/<str:booking_ref>/',
          PaymentStatusView.as_view(),    name='payment-status'),
 
-    # Seat locking — trips
+    # Seat locking — trips (dedicated views, no kwargs hack)
     path('trips/<slug:trip_slug>/lock-seats/',
-         SeatLockView.as_view(),   kwargs={'stage_run_slug': None}, name='trip-seat-lock'),
+         TripSeatLockView.as_view(),   name='trip-seat-lock'),
     path('trips/<slug:trip_slug>/seat-status/',
-         SeatStatusView.as_view(), kwargs={'stage_run_slug': None}, name='trip-seat-status'),
+         TripSeatStatusView.as_view(), name='trip-seat-status'),
 
-    # Seat locking — stage runs
+    # Seat locking — stage runs (dedicated views)
     path('stage-runs/<slug:stage_run_slug>/lock-seats/',
-         SeatLockView.as_view(),   kwargs={'trip_slug': None}, name='stagerun-seat-lock'),
+         StageRunSeatLockView.as_view(),   name='stagerun-seat-lock'),
     path('stage-runs/<slug:stage_run_slug>/seat-status/',
-         SeatStatusView.as_view(), kwargs={'trip_slug': None}, name='stagerun-seat-status'),
+         StageRunSeatStatusView.as_view(), name='stagerun-seat-status'),
 
     # Global seat lock cleanup
     path('seat-locks/cleanup/',

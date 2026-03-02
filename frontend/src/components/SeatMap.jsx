@@ -1,27 +1,21 @@
 // frontend/src/components/SeatMap.jsx
-// Renders a matatu seat grid.
-// Matatu typical configs:
-//   14-seater: 2+2 per row (rows 1-3), row 4 back bench (3 seats)
-//   33-seater: 2+2 per row
-// Driver seat top-left, conductor near door.
-
 import { useEffect, useRef, useState } from "react";
 import { api } from "../services/api";
 
 const SEAT_COLORS = {
-  available: { bg: "#22c55e", text: "#fff", border: "#16a34a" },
-  selected:  { bg: "#f59e0b", text: "#fff", border: "#d97706" },
-  booked:    { bg: "#ef4444", text: "#fff", border: "#dc2626" },
-  locked:    { bg: "#f97316", text: "#fff", border: "#ea580c" },
-  driver:    { bg: "#1e3a8a", text: "#fff", border: "#1e40af" },
-  conductor: { bg: "#7c3aed", text: "#fff", border: "#6d28d9" },
-  my_locked: { bg: "#f59e0b", text: "#fff", border: "#d97706" },
+  available: { bg: "var(--green-100)", text: "var(--green-700)", border: "var(--green-300)" },
+  selected:  { bg: "#dbeafe", text: "#1d4ed8", border: "#93c5fd" },
+  booked:    { bg: "var(--danger-light)", text: "var(--danger)", border: "#fecaca" },
+  locked:    { bg: "var(--warning-light)", text: "#c2410c", border: "#fed7aa" },
+  driver:    { bg: "var(--gray-800)", text: "#fff", border: "var(--gray-700)" },
+  conductor: { bg: "var(--primary-dark)", text: "#fff", border: "var(--primary)" },
+  my_locked: { bg: "var(--warning-light)", text: "#c2410c", border: "#fed7aa" },
   aisle:     { bg: "transparent", text: "transparent", border: "transparent" },
 };
 
 function SeatCell({ seat, status, selected, onClick }) {
   if (seat.is_aisle_gap) {
-    return <div style={{ width: 36, height: 36, gridColumn: `span ${seat.col_span || 1}` }} />;
+    return <div className="seat-aisle" style={{ gridColumn: `span ${seat.col_span || 1}` }} />;
   }
 
   const isBookable = !seat.is_driver_seat && !seat.is_conductor_seat
@@ -38,76 +32,84 @@ function SeatCell({ seat, status, selected, onClick }) {
   const label = seat.custom_label || seat.seat_number;
 
   return (
-    <div
+    <button
       onClick={() => isBookable && onClick(seat)}
+      disabled={!isBookable}
+      className={`seat-cell ${!isBookable ? 'disabled' : ''} ${selected ? 'selected' : ''}`}
       title={
         seat.is_driver_seat ? "Driver" :
         seat.is_conductor_seat ? "Conductor" :
-        status === "booked" ? "Booked" :
-        status === "locked" ? "Locked by someone" :
-        selected ? "Selected" : "Available"
+        status === "booked" ? "Already Booked" :
+        status === "locked" ? "Temporarily Unavailable" :
+        selected ? "Selected" : "Click to Select"
       }
       style={{
-        width: 36 + (seat.extra_padding || 0),
-        height: 36,
-        backgroundColor: seat.bg_color || color.bg,
-        color: seat.text_color || color.text,
-        border: `2px solid ${color.border}`,
-        borderRadius: 6,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 11,
-        fontWeight: 700,
-        cursor: isBookable ? "pointer" : "default",
-        userSelect: "none",
-        transition: "transform 0.1s",
+        backgroundColor: color.bg,
+        color: color.text,
+        borderColor: color.border,
         gridColumn: `span ${seat.col_span || 1}`,
         gridRow: `span ${seat.row_span || 1}`,
-        boxSizing: "border-box",
       }}
-      onMouseEnter={e => { if (isBookable) e.currentTarget.style.transform = "scale(1.1)"; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
     >
       {label}
-    </div>
+    </button>
   );
 }
 
 export default function SeatMap({ seats, slug, isStageRun = false, onSelectionChange }) {
   const [selected, setSelected] = useState(new Set());
   const [seatStatus, setSeatStatus] = useState({ booked: [], locked_by_others: [], my_locks: {} });
+  const [loading, setLoading] = useState(true);
   const pollRef = useRef(null);
 
-  // Poll seat status every 4s
   useEffect(() => {
-    const fetchStatus = async () => {
+    let isMounted = true;
+
+    const fetchStatus = async (isInitial) => {
       try {
         const fn = isStageRun ? api.getStageRunSeatStatus : api.getTripSeatStatus;
         const data = await fn(slug);
+        if (!isMounted) return;
+        // Only update the status overlay — never touch `selected` or trigger
+        // a loading state on background polls, so the user's interaction
+        // is never interrupted.
         setSeatStatus(data);
-      } catch {}
+      } catch {
+        // silent on poll failures
+      } finally {
+        // Only clear the initial loading spinner once, never on polls
+        if (isInitial && isMounted) setLoading(false);
+      }
     };
-    fetchStatus();
-    pollRef.current = setInterval(fetchStatus, 4000);
-    return () => clearInterval(pollRef.current);
+
+    // First load: show spinner
+    fetchStatus(true);
+
+    // Background polls: completely silent, no loading state change
+    pollRef.current = setInterval(() => fetchStatus(false), 8000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(pollRef.current);
+    };
   }, [slug, isStageRun]);
 
-  const handleSeatClick = (seat) => {
+  const handleSeatClick = async (seat) => {
     setSelected(prev => {
       const next = new Set(prev);
       if (next.has(seat.seat_number)) {
         next.delete(seat.seat_number);
-        // Release lock
         const fn = isStageRun ? api.lockStageRunSeats : api.lockTripSeats;
         fn(slug, [seat.seat_number], "release").catch(() => {});
       } else {
         next.add(seat.seat_number);
-        // Acquire lock
         const fn = isStageRun ? api.lockStageRunSeats : api.lockTripSeats;
         fn(slug, [seat.seat_number]).catch(() => {
-          // If lock fails, deselect
-          setSelected(p => { const n = new Set(p); n.delete(seat.seat_number); return n; });
+          setSelected(p => {
+            const n = new Set(p);
+            n.delete(seat.seat_number);
+            return n;
+          });
         });
       }
       return next;
@@ -116,7 +118,7 @@ export default function SeatMap({ seats, slug, isStageRun = false, onSelectionCh
 
   useEffect(() => {
     onSelectionChange?.(Array.from(selected));
-  }, [selected]);
+  }, [selected, onSelectionChange]);
 
   const getSeatStatus = (seat) => {
     if (seatStatus.booked?.includes(seat.seat_number)) return "booked";
@@ -125,56 +127,64 @@ export default function SeatMap({ seats, slug, isStageRun = false, onSelectionCh
     return "available";
   };
 
-  // Build grid: find max row & col
-  const maxRow = Math.max(...seats.map(s => s.row_number + (s.row_span || 1) - 1));
-  const maxCol = Math.max(...seats.map(s => s.column_number + (s.col_span || 1) - 1));
+  const maxRow = Math.max(...seats.map(s => s.row_number + (s.row_span || 1) - 1), 0);
+  const maxCol = Math.max(...seats.map(s => s.column_number + (s.col_span || 1) - 1), 0);
 
-  // Place seats in a CSS grid
-  const gridStyle = {
-    display: "grid",
-    gridTemplateColumns: `repeat(${maxCol}, 40px)`,
-    gridTemplateRows: `repeat(${maxRow}, 44px)`,
-    gap: "6px",
-    padding: "12px",
-    background: "#f3f4f6",
-    borderRadius: 12,
-    border: "2px solid #d1d5db",
-    width: "fit-content",
-    margin: "0 auto",
-  };
+  if (loading) {
+    return (
+      <div className="seat-map-loading">
+        <div className="spinner" />
+        <p>Loading seat map...</p>
+      </div>
+    );
+  }
 
   return (
-    <div>
+    <div className="seat-map">
       {/* Legend */}
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16, fontSize: 12 }}>
-        {[
-          ["#22c55e", "Available"],
-          ["#f59e0b", "Selected"],
-          ["#ef4444", "Booked"],
-          ["#f97316", "Locked"],
-          ["#1e3a8a", "Driver"],
-          ["#7c3aed", "Conductor"],
-        ].map(([color, label]) => (
-          <div key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <div style={{ width: 14, height: 14, backgroundColor: color, borderRadius: 3 }} />
-            <span style={{ color: "#374151" }}>{label}</span>
-          </div>
-        ))}
+      <div className="seat-legend">
+        <div className="legend-item">
+          <div className="legend-color available" />
+          <span>Available</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color selected" />
+          <span>Selected</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color booked" />
+          <span>Booked</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color locked" />
+          <span>Temporarily Locked</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color driver" />
+          <span>Driver</span>
+        </div>
+        <div className="legend-item">
+          <div className="legend-color conductor" />
+          <span>Conductor</span>
+        </div>
       </div>
 
-      {/* Front of matatu indicator */}
-      <div style={{
-        textAlign: "center",
-        fontSize: 12,
-        color: "#6b7280",
-        marginBottom: 6,
-        fontWeight: 600,
-        letterSpacing: 1,
-      }}>
-        ▲ FRONT
+      {/* Matatu Front Indicator */}
+      <div className="matatu-front">
+        <div className="front-indicator">
+          <i className="bi bi-arrow-up" />
+          <span>FRONT OF MATATU</span>
+        </div>
       </div>
 
-      <div style={gridStyle}>
+      {/* Seat Grid */}
+      <div
+        className="seat-grid"
+        style={{
+          gridTemplateColumns: `repeat(${maxCol}, 1fr)`,
+          gridTemplateRows: `repeat(${maxRow}, 1fr)`,
+        }}
+      >
         {seats.map(seat => (
           <div key={seat.id} style={{
             gridColumn: `${seat.column_number} / span ${seat.col_span || 1}`,
@@ -190,20 +200,215 @@ export default function SeatMap({ seats, slug, isStageRun = false, onSelectionCh
         ))}
       </div>
 
+      {/* Selection Summary */}
       {selected.size > 0 && (
-        <div style={{
-          marginTop: 12,
-          padding: "8px 12px",
-          background: "#fef3c7",
-          borderRadius: 8,
-          textAlign: "center",
-          fontSize: 14,
-          fontWeight: 600,
-          color: "#92400e",
-        }}>
-          Selected: {Array.from(selected).join(", ")} ({selected.size} seat{selected.size > 1 ? "s" : ""})
+        <div className="selection-summary">
+          <div className="selection-header">
+            <i className="bi bi-check2-circle" />
+            <span>Selected Seats</span>
+          </div>
+          <div className="selected-seats-list">
+            {Array.from(selected).map(seat => (
+              <span key={seat} className="selected-seat-tag">
+                {seat}
+              </span>
+            ))}
+          </div>
+          <div className="selection-count">
+            {selected.size} seat{selected.size > 1 ? 's' : ''} selected
+          </div>
         </div>
       )}
+
+      {/* Accessibility Info */}
+      <div className="seat-map-footer">
+        <i className="bi bi-info-circle" />
+        <span>Click on an available seat to select it. Selected seats will be held for 5 minutes.</span>
+      </div>
+
+      <style>{`
+        .seat-map {
+          width: 100%;
+          overflow-x: auto;
+          padding: 16px 0;
+        }
+
+        .seat-legend {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 20px;
+          margin-bottom: 24px;
+          padding: 12px 16px;
+          background: white;
+          border: 1px solid var(--gray-200);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow-sm);
+        }
+
+        .legend-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.85rem;
+          color: var(--gray-600);
+        }
+
+        .legend-color {
+          width: 20px;
+          height: 20px;
+          border-radius: 4px;
+          border: 1px solid;
+        }
+
+        .legend-color.available { background: var(--green-100); border-color: var(--green-300); }
+        .legend-color.selected  { background: #dbeafe; border-color: #93c5fd; }
+        .legend-color.booked    { background: var(--danger-light); border-color: #fecaca; }
+        .legend-color.locked    { background: var(--warning-light); border-color: #fed7aa; }
+        .legend-color.driver    { background: var(--gray-800); border-color: var(--gray-700); }
+        .legend-color.conductor { background: var(--primary-dark); border-color: var(--primary); }
+
+        .matatu-front {
+          text-align: center;
+          margin-bottom: 16px;
+        }
+
+        .front-indicator {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 16px;
+          background: var(--gray-100);
+          border: 1px solid var(--gray-200);
+          border-radius: 100px;
+          color: var(--gray-500);
+          font-size: 0.75rem;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+        }
+
+        .front-indicator i { color: var(--primary); font-size: 0.8rem; }
+
+        .seat-grid {
+          display: grid;
+          gap: 8px;
+          padding: 24px;
+          background: white;
+          border: 1px solid var(--gray-200);
+          border-radius: var(--radius-xl);
+          box-shadow: var(--shadow);
+          width: fit-content;
+          margin: 0 auto;
+        }
+
+        .seat-cell {
+          width: 44px;
+          height: 44px;
+          border-radius: var(--radius-sm);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.75rem;
+          font-weight: 700;
+          font-family: var(--font-mono);
+          cursor: pointer;
+          border: 2px solid;
+          transition: all 0.15s;
+          background: white;
+          padding: 0;
+          line-height: 1;
+        }
+
+        .seat-cell:hover:not(:disabled) { transform: scale(1.1); box-shadow: var(--shadow); z-index: 2; }
+        .seat-cell.selected             { transform: scale(1.05); box-shadow: var(--shadow); }
+        .seat-cell.disabled             { cursor: not-allowed; opacity: 0.7; }
+
+        .seat-aisle { width: 44px; height: 44px; }
+
+        .selection-summary {
+          margin-top: 24px;
+          padding: 16px 20px;
+          background: var(--primary-light);
+          border: 1px solid var(--primary-border);
+          border-radius: var(--radius);
+          animation: slideUp 0.2s ease;
+        }
+
+        .selection-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 12px;
+          color: var(--primary-dark);
+          font-weight: 600;
+        }
+
+        .selection-header i { font-size: 1.1rem; }
+
+        .selected-seats-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+
+        .selected-seat-tag {
+          padding: 4px 12px;
+          background: white;
+          border: 1px solid var(--primary-border);
+          border-radius: 100px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--primary-dark);
+          box-shadow: var(--shadow-xs);
+        }
+
+        .selection-count { font-size: 0.9rem; font-weight: 600; color: var(--primary-dark); }
+
+        .seat-map-footer {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-top: 20px;
+          padding: 12px 16px;
+          background: var(--gray-50);
+          border: 1px solid var(--gray-200);
+          border-radius: var(--radius);
+          font-size: 0.85rem;
+          color: var(--gray-500);
+        }
+
+        .seat-map-footer i { color: var(--primary); }
+
+        .seat-map-loading {
+          text-align: center;
+          padding: 40px 20px;
+          background: white;
+          border: 1px solid var(--gray-200);
+          border-radius: var(--radius-xl);
+        }
+
+        .seat-map-loading p { margin-top: 16px; color: var(--gray-500); }
+
+        .spinner {
+          width: 32px;
+          height: 32px;
+          border: 3px solid var(--gray-200);
+          border-top-color: var(--primary);
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite;
+          margin: 0 auto;
+        }
+
+        @keyframes spin    { to { transform: rotate(360deg); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+          .seat-cell   { width: 36px; height: 36px; font-size: 0.7rem; }
+          .seat-legend { gap: 12px; }
+          .legend-item { font-size: 0.75rem; }
+          .legend-color { width: 16px; height: 16px; }
+        }
+
+        @media (max-width: 480px) {
+          .seat-grid { padding: 16px; gap: 4px; }
+          .seat-cell { width: 32px; height: 32px; }
+        }
+      `}</style>
     </div>
   );
 }

@@ -57,6 +57,240 @@ def _get_session_key(request):
     return request.session.session_key
 
 
+# ─── shared helpers ───────────────────────────────────────────────────────────
+
+def _lock_seats(request, obj, lock_filter, book_filter):
+    """
+    Core locking logic shared by trip and stage-run lock views.
+    lock_filter  e.g. {'trip': obj}  or  {'stage_run': obj}
+    book_filter  e.g. {'booking__trip': obj}  or  {'booking__stage_run': obj}
+    """
+    SeatLock.cleanup_expired()
+
+    action       = request.data.get('action', 'lock')
+    seat_numbers = request.data.get('seat_numbers', [])
+    session_key  = _get_session_key(request)
+    matatu       = obj.matatu
+
+    # ── Release ──────────────────────────────────────────────────────────────
+    if action == 'release':
+        SeatLock.objects.filter(
+            **lock_filter,
+            session_key=session_key,
+            seat__seat_number__in=seat_numbers,
+        ).delete()
+        return Response({'released': seat_numbers})
+
+    # ── Validate seat numbers ─────────────────────────────────────────────────
+    seats = SeatLayout.objects.filter(
+        matatu=matatu,
+        seat_number__in=seat_numbers,
+        is_active=True,
+        is_aisle_gap=False,
+        is_driver_seat=False,
+        is_conductor_seat=False,
+    )
+    if seats.count() != len(seat_numbers):
+        return Response({'error': 'One or more invalid seat numbers.'}, status=400)
+
+    # ── Already booked? ───────────────────────────────────────────────────────
+    already_booked = list(
+        BookedSeat.objects.filter(
+            seat__in=seats,
+            booking__status__in=['pending', 'confirmed'],
+            **book_filter,
+        ).values_list('seat__seat_number', flat=True)
+    )
+    if already_booked:
+        return Response(
+            {'error': 'Seats already booked.', 'booked': already_booked},
+            status=409,
+        )
+
+    # ── Locked by someone else? ───────────────────────────────────────────────
+    locked_by_others = list(
+        SeatLock.objects.filter(**lock_filter, seat__in=seats)
+        .exclude(session_key=session_key)
+        .values_list('seat__seat_number', flat=True)
+    )
+    if locked_by_others:
+        return Response(
+            {'error': 'Seats locked by another user.', 'locked': locked_by_others},
+            status=409,
+        )
+
+    # ── Acquire locks ─────────────────────────────────────────────────────────
+    expires_at = timezone.now() + SeatLock.lock_duration()
+    locked, failed = [], []
+
+    for seat in seats:
+        try:
+            # update_or_create needs the lookup fields that are unique together.
+            # SeatLock has no DB unique_together, so filter + delete + create
+            # is safer than update_or_create to avoid duplicates.
+            SeatLock.objects.filter(
+                **lock_filter,
+                seat=seat,
+                session_key=session_key,
+            ).delete()
+            SeatLock.objects.create(
+                **lock_filter,
+                seat=seat,
+                session_key=session_key,
+                expires_at=expires_at,
+            )
+            locked.append(seat.seat_number)
+        except IntegrityError:
+            failed.append(seat.seat_number)
+
+    if failed:
+        # Roll back any locks we just created
+        SeatLock.objects.filter(
+            **lock_filter,
+            seat__seat_number__in=locked,
+            session_key=session_key,
+        ).delete()
+        return Response({'error': 'Race condition on lock.', 'failed': failed}, status=409)
+
+    return Response({
+        'locked': locked,
+        'expires_at': expires_at.isoformat(),
+        'session_key': session_key,
+        'expires_in_seconds': int(SeatLock.lock_duration().total_seconds()),
+    })
+
+
+def _seat_status(request, obj, lock_filter, book_filter):
+    """
+    Core status logic shared by trip and stage-run status views.
+    """
+    SeatLock.cleanup_expired()
+    session_key = _get_session_key(request)
+
+    booked = list(
+        BookedSeat.objects.filter(
+            booking__status__in=['pending', 'confirmed'],
+            **book_filter,
+        ).values_list('seat__seat_number', flat=True)
+    )
+
+    locked_by_others = list(
+        SeatLock.objects.filter(**lock_filter)
+        .exclude(session_key=session_key)
+        .values_list('seat__seat_number', flat=True)
+    )
+
+    my_locks = SeatLock.objects.filter(
+        **lock_filter, session_key=session_key
+    ).values('seat__seat_number', 'expires_at')
+
+    my_locked_seats = {
+        lock['seat__seat_number']: max(
+            0, int((lock['expires_at'] - timezone.now()).total_seconds())
+        )
+        for lock in my_locks
+    }
+
+    return Response({
+        'booked': booked,
+        'locked_by_others': locked_by_others,
+        'my_locks': my_locked_seats,
+    })
+
+
+# ─── Trip seat lock ───────────────────────────────────────────────────────────
+
+class TripSeatLockView(APIView):
+    """
+    POST /api/v1/trips/<trip_slug>/lock-seats/
+    Body: { "seat_numbers": ["1","2"], "action": "lock" | "release" }
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request, trip_slug):
+        try:
+            obj = Trip.objects.get(slug=trip_slug)
+        except Trip.DoesNotExist:
+            return Response({'error': 'Trip not found.'}, status=404)
+
+        return _lock_seats(
+            request, obj,
+            lock_filter={'trip': obj},
+            book_filter={'booking__trip': obj},
+        )
+
+
+class TripSeatStatusView(APIView):
+    """
+    GET /api/v1/trips/<trip_slug>/seat-status/
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, trip_slug):
+        try:
+            obj = Trip.objects.get(slug=trip_slug)
+        except Trip.DoesNotExist:
+            return Response({'error': 'Trip not found.'}, status=404)
+
+        return _seat_status(
+            request, obj,
+            lock_filter={'trip': obj},
+            book_filter={'booking__trip': obj},
+        )
+
+
+# ─── Stage-run seat lock ──────────────────────────────────────────────────────
+
+class StageRunSeatLockView(APIView):
+    """
+    POST /api/v1/stage-runs/<stage_run_slug>/lock-seats/
+    Body: { "seat_numbers": ["1","2"], "action": "lock" | "release" }
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request, stage_run_slug):
+        try:
+            obj = StageRun.objects.get(slug=stage_run_slug)
+        except StageRun.DoesNotExist:
+            return Response({'error': 'Stage run not found.'}, status=404)
+
+        return _lock_seats(
+            request, obj,
+            lock_filter={'stage_run': obj},
+            book_filter={'booking__stage_run': obj},
+        )
+
+
+class StageRunSeatStatusView(APIView):
+    """
+    GET /api/v1/stage-runs/<stage_run_slug>/seat-status/
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, stage_run_slug):
+        try:
+            obj = StageRun.objects.get(slug=stage_run_slug)
+        except StageRun.DoesNotExist:
+            return Response({'error': 'Stage run not found.'}, status=404)
+
+        return _seat_status(
+            request, obj,
+            lock_filter={'stage_run': obj},
+            book_filter={'booking__stage_run': obj},
+        )
+
+
+# ─── Cleanup ──────────────────────────────────────────────────────────────────
+
+class SeatLockCleanupView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        SeatLock.cleanup_expired()
+        active = SeatLock.objects.filter(expires_at__gt=timezone.now()).count()
+        return Response({'status': 'ok', 'active_locks_remaining': active})
+
 # ─────────────────────────────────────────────────────────────────────────────
 # PUBLIC VIEWSETS
 # ─────────────────────────────────────────────────────────────────────────────
@@ -643,14 +877,7 @@ class SeatStatusView(APIView):
         })
 
 
-class SeatLockCleanupView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
 
-    def post(self, request):
-        SeatLock.cleanup_expired()
-        active = SeatLock.objects.filter(expires_at__gt=timezone.now()).count()
-        return Response({'status': 'ok', 'active_locks_remaining': active})
 
 
 # ─────────────────────────────────────────────────────────────────────────────
