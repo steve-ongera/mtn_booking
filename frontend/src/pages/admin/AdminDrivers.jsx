@@ -53,70 +53,148 @@ export default function AdminDrivers() {
 
   return (
     <div>
-      <div className="d-flex align-center justify-between flex-wrap gap-2 mb-4">
+      {/* Header */}
+      <div className="d-flex align-center justify-between flex-wrap gap-3 mb-4">
         <div>
-          <h4 className="fw-800" style={{ marginBottom:2 }}>Drivers</h4>
-          <p className="text-muted" style={{ margin:0 }}>Registered MTN Sacco drivers</p>
+          <h3 style={{ marginBottom: '4px' }}>Drivers</h3>
+          <p className="text-muted" style={{ margin: 0 }}>Registered MTN Sacco drivers</p>
         </div>
         <div className="d-flex gap-2">
-          <div className="ad-search-wrap">
+          {/* Search */}
+          <div className="ad-search" style={{ position: 'relative' }}>
             <i className="bi bi-search"></i>
-            <input className="ad-search-input" placeholder="Search drivers…" value={search}
-              onChange={e => setSearch(e.target.value)} />
+            <input 
+              className="form-control" 
+              placeholder="Search drivers..." 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ width: '250px' }}
+            />
           </div>
-          <button className="btn-ad btn-ad-primary" onClick={openAdd}>
+          
+          {/* Add Button */}
+          <button className="btn btn-primary" onClick={openAdd}>
             <i className="bi bi-person-plus"></i> Add Driver
           </button>
         </div>
       </div>
 
+      {/* Main Card */}
       <div className="ad-card">
         {loading ? (
-          <div style={{ padding:'3rem', textAlign:'center' }}><div className="ad-spinner" style={{ margin:'0 auto' }}></div></div>
+          <div style={{ padding: '48px', textAlign: 'center' }}>
+            <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+            <p className="text-muted">Loading drivers...</p>
+          </div>
         ) : items.length === 0 ? (
-          <div className="ad-empty"><i className="bi bi-person-badge"></i><h5>No drivers found</h5><p>Register your first driver</p></div>
+          <div style={{ 
+            padding: '48px', 
+            textAlign: 'center',
+            color: 'var(--gray-400)'
+          }}>
+            <i className="bi bi-person-badge" style={{ fontSize: '3rem', display: 'block', marginBottom: '16px' }}></i>
+            <h5 style={{ color: 'var(--gray-600)', marginBottom: '8px' }}>No drivers found</h5>
+            <p style={{ fontSize: '0.95rem' }}>Register your first driver</p>
+          </div>
         ) : (
-          <div className="ad-table-wrap">
+          <div style={{ overflowX: 'auto' }}>
             <table className="ad-table">
-              <thead><tr><th>Driver</th><th>Phone</th><th>License</th><th>Assigned Matatu</th><th>Status</th><th>Actions</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Driver</th>
+                  <th>Phone</th>
+                  <th>License</th>
+                  <th>Assigned Matatu</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
               <tbody>
                 {items.map(d => (
                   <tr key={d.id}>
                     <td>
                       <div className="d-flex align-center gap-2">
-                        <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--blue-100)', color:'var(--primary)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:'.78rem', flexShrink:0 }}>
+                        <div style={{ 
+                          width: '36px', 
+                          height: '36px', 
+                          borderRadius: '50%', 
+                          background: 'var(--primary-soft)', 
+                          color: 'var(--primary)',
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          fontWeight: '700', 
+                          fontSize: '.85rem',
+                          flexShrink: 0 
+                        }}>
                           {(d.full_name?.[0] || '?').toUpperCase()}
                         </div>
                         <div>
-                          <div className="fw-600">{d.full_name}</div>
-                          <div className="text-muted" style={{ fontSize:'.72rem' }}>@{d.username}</div>
+                          <div style={{ fontWeight: '600', color: 'var(--gray-900)' }}>{d.full_name}</div>
+                          <div className="text-muted" style={{ fontSize: '.72rem' }}>@{d.username}</div>
                         </div>
                       </div>
                     </td>
                     <td>{d.phone}</td>
-                    <td><code style={{ fontSize:'.78rem' }}>{d.license_number}</code></td>
                     <td>
-                      {d.assigned_matatu
-                        ? <span><i className="bi bi-bus-front" style={{ color:'var(--primary)', marginRight:5 }}></i>{d.assigned_matatu.name} <code style={{ fontSize:'.7rem' }}>{d.assigned_matatu.plate}</code></span>
-                        : <span className="text-muted">Not assigned</span>
-                      }
+                      <code style={{ 
+                        fontSize: '.78rem',
+                        background: 'var(--gray-100)',
+                        padding: '2px 6px',
+                        borderRadius: 'var(--radius-xs)',
+                        color: 'var(--gray-700)'
+                      }}>
+                        {d.license_number}
+                      </code>
                     </td>
                     <td>
-                      <span className={`badge ${d.status === 'active' ? 'badge-active' : 'badge-inactive'}`}>
-                        <span className={`dot dot-${d.status === 'active' ? 'green' : 'gray'}`}></span>
+                      {d.assigned_matatu ? (
+                        <span>
+                          <i className="bi bi-bus-front" style={{ color: 'var(--primary)', marginRight: '5px' }}></i>
+                          {d.assigned_matatu.name} 
+                          <code style={{ 
+                            fontSize: '.7rem',
+                            background: 'var(--gray-100)',
+                            padding: '2px 4px',
+                            borderRadius: 'var(--radius-xs)',
+                            marginLeft: '4px'
+                          }}>
+                            {d.assigned_matatu.plate}
+                          </code>
+                        </span>
+                      ) : (
+                        <span className="text-muted">Not assigned</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`badge ${d.status === 'active' ? 'badge-success' : 'badge-danger'}`}>
+                        <span style={{
+                          display: 'inline-block',
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: d.status === 'active' ? 'var(--success)' : 'var(--danger)',
+                          marginRight: '6px'
+                        }}></span>
                         {d.status}
                       </span>
                     </td>
                     <td>
-                      <div className="actions">
+                      <div className="d-flex gap-1">
                         <button
-                          className={`btn-ad btn-ad-sm ${d.status === 'active' ? 'btn-ad-secondary' : 'btn-ad-success'}`}
+                          className={`btn btn-sm ${d.status === 'active' ? 'btn-outline-warning' : 'btn-outline-success'}`}
                           onClick={() => handleToggle(d.id)}
-                          data-tip={d.status === 'active' ? 'Suspend' : 'Activate'}
+                          title={d.status === 'active' ? 'Suspend' : 'Activate'}
+                          style={{ padding: '6px 10px' }}
                         >
                           <i className={`bi ${d.status === 'active' ? 'bi-pause-circle' : 'bi-play-circle'}`}></i>
                         </button>
-                        <button className="btn-ad btn-ad-danger btn-ad-sm" onClick={() => handleDelete(d.id, d.full_name)} data-tip="Remove">
+                        <button 
+                          className="btn btn-sm btn-outline-danger" 
+                          onClick={() => handleDelete(d.id, d.full_name)} 
+                          title="Remove"
+                          style={{ padding: '6px 10px' }}
+                        >
                           <i className="bi bi-trash"></i>
                         </button>
                       </div>
@@ -131,74 +209,175 @@ export default function AdminDrivers() {
 
       {/* Add Driver Modal */}
       {showModal && (
-        <div className="ad-modal-overlay" onClick={e => e.target === e.currentTarget && setModal(false)}>
-          <div className="ad-modal ad-modal-md">
-            <div className="ad-modal-header">
-              <span className="ad-modal-title"><i className="bi bi-person-plus" style={{ marginRight:8, color:'var(--primary)' }}></i>Register Driver</span>
-              <button className="ad-modal-close" onClick={() => setModal(false)}><i className="bi bi-x-lg"></i></button>
+        <div 
+          className="ad-modal-overlay" 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={e => e.target === e.currentTarget && setModal(false)}
+        >
+          <div className="ad-card" style={{ width: '600px', maxWidth: '90vw' }}>
+            <div className="ad-card-header">
+              <span className="ad-card-title">
+                <i className="bi bi-person-plus" style={{ marginRight: '8px', color: 'var(--primary)' }}></i>
+                Register Driver
+              </span>
+              <button 
+                className="btn btn-sm btn-outline" 
+                onClick={() => setModal(false)}
+                style={{ border: 'none', padding: '8px' }}
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
             </div>
-            <div className="ad-modal-body">
-              {error && <div className="ad-alert ad-alert-error"><i className="bi bi-exclamation-circle-fill"></i>{error}</div>}
-              <div className="ad-section-title mb-2">Personal Info</div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem', marginBottom:'1rem' }}>
+            <div className="ad-card-body">
+              {error && (
+                <div className="alert alert-danger" style={{ marginBottom: '20px' }}>
+                  <i className="bi bi-exclamation-circle-fill"></i>
+                  {error}
+                </div>
+              )}
+
+              {/* Personal Info Section */}
+              <h5 style={{ 
+                fontSize: '0.9rem', 
+                marginBottom: '16px',
+                color: 'var(--gray-700)',
+                fontWeight: '600'
+              }}>
+                Personal Info
+              </h5>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                 {[['first_name','First Name'],['last_name','Last Name']].map(([f,l]) => (
-                  <div className="ad-form-group" key={f}>
-                    <label className="ad-label">{l} *</label>
-                    <input className="ad-input" value={form[f]} onChange={e => setForm(p => ({ ...p, [f]: e.target.value }))} />
+                  <div className="form-group" key={f}>
+                    <label className="form-label">{l} *</label>
+                    <input 
+                      className="form-control" 
+                      value={form[f]} 
+                      onChange={e => setForm(p => ({ ...p, [f]: e.target.value }))} 
+                    />
                   </div>
                 ))}
-                <div className="ad-form-group">
-                  <label className="ad-label">Phone *</label>
-                  <input className="ad-input" placeholder="07XX XXX XXX" value={form.phone}
-                    onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+                <div className="form-group">
+                  <label className="form-label">Phone *</label>
+                  <input 
+                    className="form-control" 
+                    placeholder="07XX XXX XXX" 
+                    value={form.phone}
+                    onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} 
+                  />
                 </div>
-                <div className="ad-form-group">
-                  <label className="ad-label">ID Number *</label>
-                  <input className="ad-input" value={form.id_number}
-                    onChange={e => setForm(p => ({ ...p, id_number: e.target.value }))} />
+                <div className="form-group">
+                  <label className="form-label">ID Number *</label>
+                  <input 
+                    className="form-control" 
+                    value={form.id_number}
+                    onChange={e => setForm(p => ({ ...p, id_number: e.target.value }))} 
+                  />
                 </div>
-                <div className="ad-form-group" style={{ gridColumn:'1/-1' }}>
-                  <label className="ad-label">License Number *</label>
-                  <input className="ad-input" placeholder="DL/XXXX/YYYY" value={form.license_number}
-                    onChange={e => setForm(p => ({ ...p, license_number: e.target.value }))} />
+                <div className="form-group" style={{ gridColumn: '1/-1' }}>
+                  <label className="form-label">License Number *</label>
+                  <input 
+                    className="form-control" 
+                    placeholder="DL/XXXX/YYYY" 
+                    value={form.license_number}
+                    onChange={e => setForm(p => ({ ...p, license_number: e.target.value }))} 
+                  />
                 </div>
               </div>
-              <div className="divider"></div>
-              <div className="ad-section-title mb-2">Login Credentials</div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
-                <div className="ad-form-group">
-                  <label className="ad-label">Username *</label>
-                  <input className="ad-input" value={form.username}
-                    onChange={e => setForm(p => ({ ...p, username: e.target.value.toLowerCase() }))} />
+
+              {/* Divider */}
+              <div style={{ 
+                height: '1px', 
+                background: 'var(--gray-200)', 
+                margin: '24px 0' 
+              }}></div>
+
+              {/* Login Credentials Section */}
+              <h5 style={{ 
+                fontSize: '0.9rem', 
+                marginBottom: '16px',
+                color: 'var(--gray-700)',
+                fontWeight: '600'
+              }}>
+                Login Credentials
+              </h5>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label">Username *</label>
+                  <input 
+                    className="form-control" 
+                    value={form.username}
+                    onChange={e => setForm(p => ({ ...p, username: e.target.value.toLowerCase() }))} 
+                  />
                 </div>
-                <div className="ad-form-group">
-                  <label className="ad-label">Email</label>
-                  <input className="ad-input" type="email" value={form.email}
-                    onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+                <div className="form-group">
+                  <label className="form-label">Email</label>
+                  <input 
+                    className="form-control" 
+                    type="email" 
+                    value={form.email}
+                    onChange={e => setForm(p => ({ ...p, email: e.target.value }))} 
+                  />
                 </div>
-                <div className="ad-form-group" style={{ gridColumn:'1/-1' }}>
-                  <label className="ad-label">Password *</label>
-                  <div style={{ position:'relative' }}>
+                <div className="form-group" style={{ gridColumn: '1/-1' }}>
+                  <label className="form-label">Password *</label>
+                  <div style={{ position: 'relative' }}>
                     <input
-                      className="ad-input"
+                      className="form-control"
                       type={showPass ? 'text' : 'password'}
                       placeholder="Min. 8 characters"
                       value={form.password}
-                      style={{ paddingRight:38 }}
+                      style={{ paddingRight: '40px' }}
                       onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                     />
-                    <button type="button" onClick={() => setShowPass(v => !v)}
-                      style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--gray-400)', fontSize:'.95rem' }}>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowPass(v => !v)}
+                      style={{ 
+                        position: 'absolute', 
+                        right: '12px', 
+                        top: '50%', 
+                        transform: 'translateY(-50%)', 
+                        background: 'none', 
+                        border: 'none', 
+                        cursor: 'pointer', 
+                        color: 'var(--gray-400)', 
+                        fontSize: '.95rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '4px'
+                      }}
+                    >
                       <i className={`bi ${showPass ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="ad-modal-footer">
-              <button className="btn-ad btn-ad-secondary" onClick={() => setModal(false)}>Cancel</button>
-              <button className="btn-ad btn-ad-primary" onClick={handleSave} disabled={saving}>
-                {saving ? <><div className="ad-spinner ad-spinner-sm ad-spinner-white"></div> Registering...</> : <><i className="bi bi-person-check"></i> Register Driver</>}
+            <div style={{ 
+              padding: '20px 24px', 
+              borderTop: '1px solid var(--gray-200)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px'
+            }}>
+              <button className="btn btn-outline" onClick={() => setModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <><div className="spinner" style={{ width: '18px', height: '18px', marginRight: '8px' }}></div> Registering...</>
+                ) : (
+                  <><i className="bi bi-person-check"></i> Register Driver</>
+                )}
               </button>
             </div>
           </div>

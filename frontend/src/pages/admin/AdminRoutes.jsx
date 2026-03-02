@@ -47,11 +47,17 @@ export default function AdminRoutes() {
     if (form.origin_id === form.destination_id) { setError('Origin and destination cannot be the same.'); return; }
     setSaving(true); setError('');
     try {
-      const p = { origin_id: Number(form.origin_id), destination_id: Number(form.destination_id), distance_km: form.distance_km ? Number(form.distance_km) : undefined, is_active: form.is_active };
+      const p = { 
+        origin_id: Number(form.origin_id), 
+        destination_id: Number(form.destination_id), 
+        distance_km: form.distance_km ? Number(form.distance_km) : undefined, 
+        is_active: form.is_active 
+      };
       editing ? await adminRoutes.update(editing.slug, p) : await adminRoutes.create(p);
       setModal(false); load();
-    } catch (e) { setError(typeof e === 'object' ? Object.values(e).flat().join(' ') : 'Save failed.'); }
-    finally { setSaving(false); }
+    } catch (e) { 
+      setError(typeof e === 'object' ? Object.values(e).flat().join(' ') : 'Save failed.'); 
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async (r) => {
@@ -62,50 +68,105 @@ export default function AdminRoutes() {
 
   return (
     <div>
-      <div className="d-flex align-center justify-between flex-wrap gap-2 mb-4">
+      {/* Header */}
+      <div className="d-flex align-center justify-between flex-wrap gap-3 mb-4">
         <div>
-          <h4 className="fw-800" style={{ marginBottom:2 }}>Routes</h4>
-          <p className="text-muted" style={{ margin:0 }}>Define matatu routes between towns</p>
+          <h3 style={{ marginBottom: '4px' }}>Routes</h3>
+          <p className="text-muted" style={{ margin: 0 }}>Define matatu routes between towns</p>
         </div>
         <div className="d-flex gap-2">
-          <div className="ad-search-wrap">
+          {/* Search */}
+          <div className="ad-search" style={{ position: 'relative' }}>
             <i className="bi bi-search"></i>
-            <input className="ad-search-input" placeholder="Search routes…" value={search}
-              onChange={e => setSearch(e.target.value)} />
+            <input 
+              className="form-control" 
+              placeholder="Search routes..." 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ width: '250px' }}
+            />
           </div>
-          <button className="btn-ad btn-ad-primary" onClick={openAdd}>
+          
+          {/* Add Button */}
+          <button className="btn btn-primary" onClick={openAdd}>
             <i className="bi bi-plus-lg"></i> Add Route
           </button>
         </div>
       </div>
 
+      {/* Main Card */}
       <div className="ad-card">
         {loading ? (
-          <div style={{ padding:'3rem', textAlign:'center' }}><div className="ad-spinner" style={{ margin:'0 auto' }}></div></div>
+          <div style={{ padding: '48px', textAlign: 'center' }}>
+            <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+            <p className="text-muted">Loading routes...</p>
+          </div>
         ) : items.length === 0 ? (
-          <div className="ad-empty"><i className="bi bi-map"></i><h5>No routes yet</h5><p>Create your first route to start adding trips</p></div>
+          <div style={{ 
+            padding: '48px', 
+            textAlign: 'center',
+            color: 'var(--gray-400)'
+          }}>
+            <i className="bi bi-map" style={{ fontSize: '3rem', display: 'block', marginBottom: '16px' }}></i>
+            <h5 style={{ color: 'var(--gray-600)', marginBottom: '8px' }}>No routes yet</h5>
+            <p style={{ fontSize: '0.95rem' }}>Create your first route to start adding trips</p>
+          </div>
         ) : (
-          <div className="ad-table-wrap">
+          <div style={{ overflowX: 'auto' }}>
             <table className="ad-table">
-              <thead><tr><th>Route</th><th>Distance</th><th>Matatus</th><th>Status</th><th>Actions</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Route</th>
+                  <th>Distance</th>
+                  <th>Matatus</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
               <tbody>
                 {items.map(r => (
                   <tr key={r.slug}>
                     <td>
-                      <div className="fw-700">{r.origin_name} → {r.destination_name}</div>
+                      <div style={{ fontWeight: '600', color: 'var(--gray-900)' }}>
+                        {r.origin_name} → {r.destination_name}
+                      </div>
                       {r.stops?.length > 0 && (
-                        <div className="text-muted" style={{ fontSize:'.75rem' }}>{r.stops.length} stops</div>
+                        <div className="text-muted" style={{ fontSize: '.75rem', marginTop: '2px' }}>
+                          {r.stops.length} stop{r.stops.length !== 1 ? 's' : ''}
+                        </div>
                       )}
                     </td>
-                    <td>{r.distance_km ? `${r.distance_km} km` : <span className="text-muted">—</span>}</td>
-                    <td>{r.matatu_count || 0}</td>
-                    <td><span className={`badge ${r.is_active ? 'badge-active' : 'badge-inactive'}`}>{r.is_active ? 'Active' : 'Inactive'}</span></td>
                     <td>
-                      <div className="actions">
-                        <button className="btn-ad btn-ad-secondary btn-ad-sm" onClick={() => openEdit(r)} data-tip="Edit">
+                      {r.distance_km ? (
+                        <span style={{ fontWeight: '500' }}>{r.distance_km} km</span>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: '500' }}>{r.matatu_count || 0}</span>
+                    </td>
+                    <td>
+                      <span className={`badge ${r.is_active ? 'badge-success' : 'badge-danger'}`}>
+                        {r.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="d-flex gap-1">
+                        <button 
+                          className="btn btn-sm btn-outline-primary" 
+                          onClick={() => openEdit(r)} 
+                          title="Edit"
+                          style={{ padding: '6px 10px' }}
+                        >
                           <i className="bi bi-pencil"></i>
                         </button>
-                        <button className="btn-ad btn-ad-danger btn-ad-sm" onClick={() => handleDelete(r)} data-tip="Delete">
+                        <button 
+                          className="btn btn-sm btn-outline-danger" 
+                          onClick={() => handleDelete(r)} 
+                          title="Delete"
+                          style={{ padding: '6px 10px' }}
+                        >
                           <i className="bi bi-trash"></i>
                         </button>
                       </div>
@@ -118,49 +179,115 @@ export default function AdminRoutes() {
         )}
       </div>
 
+      {/* Add/Edit Modal */}
       {showModal && (
-        <div className="ad-modal-overlay" onClick={e => e.target === e.currentTarget && setModal(false)}>
-          <div className="ad-modal ad-modal-sm">
-            <div className="ad-modal-header">
-              <span className="ad-modal-title"><i className="bi bi-map" style={{ marginRight:8, color:'var(--primary)' }}></i>{editing ? 'Edit Route' : 'Add Route'}</span>
-              <button className="ad-modal-close" onClick={() => setModal(false)}><i className="bi bi-x-lg"></i></button>
+        <div 
+          className="ad-modal-overlay" 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={e => e.target === e.currentTarget && setModal(false)}
+        >
+          <div className="ad-card" style={{ width: '450px', maxWidth: '90vw' }}>
+            <div className="ad-card-header">
+              <span className="ad-card-title">
+                <i className="bi bi-map" style={{ marginRight: '8px', color: 'var(--primary)' }}></i>
+                {editing ? 'Edit Route' : 'Add Route'}
+              </span>
+              <button 
+                className="btn btn-sm btn-outline" 
+                onClick={() => setModal(false)}
+                style={{ border: 'none', padding: '8px' }}
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
             </div>
-            <div className="ad-modal-body">
-              {error && <div className="ad-alert ad-alert-error"><i className="bi bi-exclamation-circle-fill"></i>{error}</div>}
-              <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-                <div className="ad-form-group">
-                  <label className="ad-label">Origin Town *</label>
-                  <select className="ad-select" value={form.origin_id} onChange={e => setForm(f => ({ ...f, origin_id: e.target.value }))}>
+            <div className="ad-card-body">
+              {error && (
+                <div className="alert alert-danger" style={{ marginBottom: '20px' }}>
+                  <i className="bi bi-exclamation-circle-fill"></i>
+                  {error}
+                </div>
+              )}
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Origin Town */}
+                <div className="form-group">
+                  <label className="form-label">Origin Town *</label>
+                  <select 
+                    className="form-control" 
+                    value={form.origin_id} 
+                    onChange={e => setForm(f => ({ ...f, origin_id: e.target.value }))}
+                  >
                     <option value="">Select town</option>
-                    {towns.filter(t => t.is_active).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    {towns.filter(t => t.is_active).map(t => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
                   </select>
                 </div>
-                <div className="ad-form-group">
-                  <label className="ad-label">Destination Town *</label>
-                  <select className="ad-select" value={form.destination_id} onChange={e => setForm(f => ({ ...f, destination_id: e.target.value }))}>
+
+                {/* Destination Town */}
+                <div className="form-group">
+                  <label className="form-label">Destination Town *</label>
+                  <select 
+                    className="form-control" 
+                    value={form.destination_id} 
+                    onChange={e => setForm(f => ({ ...f, destination_id: e.target.value }))}
+                  >
                     <option value="">Select town</option>
-                    {towns.filter(t => t.is_active && String(t.id) !== String(form.origin_id)).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    {towns.filter(t => t.is_active && String(t.id) !== String(form.origin_id)).map(t => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
                   </select>
                 </div>
-                <div className="ad-form-group">
-                  <label className="ad-label">Distance (km)</label>
-                  <input className="ad-input" type="number" placeholder="e.g. 87" value={form.distance_km}
-                    onChange={e => setForm(f => ({ ...f, distance_km: e.target.value }))} />
+
+                {/* Distance */}
+                <div className="form-group">
+                  <label className="form-label">Distance (km)</label>
+                  <input 
+                    className="form-control" 
+                    type="number" 
+                    placeholder="e.g. 87" 
+                    value={form.distance_km}
+                    onChange={e => setForm(f => ({ ...f, distance_km: e.target.value }))} 
+                  />
                 </div>
-                <div className="ad-form-group">
-                  <label className="ad-label">Status</label>
-                  <select className="ad-select" value={form.is_active ? 'true' : 'false'}
-                    onChange={e => setForm(f => ({ ...f, is_active: e.target.value === 'true' }))}>
+
+                {/* Status */}
+                <div className="form-group">
+                  <label className="form-label">Status</label>
+                  <select 
+                    className="form-control" 
+                    value={form.is_active ? 'true' : 'false'}
+                    onChange={e => setForm(f => ({ ...f, is_active: e.target.value === 'true' }))}
+                  >
                     <option value="true">Active</option>
                     <option value="false">Inactive</option>
                   </select>
                 </div>
               </div>
             </div>
-            <div className="ad-modal-footer">
-              <button className="btn-ad btn-ad-secondary" onClick={() => setModal(false)}>Cancel</button>
-              <button className="btn-ad btn-ad-primary" onClick={handleSave} disabled={saving}>
-                {saving ? <><div className="ad-spinner ad-spinner-sm ad-spinner-white"></div> Saving...</> : <><i className="bi bi-check-lg"></i> Save</>}
+            <div style={{ 
+              padding: '20px 24px', 
+              borderTop: '1px solid var(--gray-200)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px'
+            }}>
+              <button className="btn btn-outline" onClick={() => setModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <><div className="spinner" style={{ width: '18px', height: '18px', marginRight: '8px' }}></div> Saving...</>
+                ) : (
+                  <><i className="bi bi-check-lg"></i> Save</>
+                )}
               </button>
             </div>
           </div>

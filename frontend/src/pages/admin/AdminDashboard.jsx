@@ -5,19 +5,61 @@ import { adminDash, adminBookings } from '../../services/api';
 
 function StatCard({ icon, iconClass, label, value, sub, subIcon }) {
   return (
-    <div className="ad-stat">
+    <div className="ad-card" style={{ padding: '20px' }}>
       <div className="d-flex align-center justify-between">
         <div>
-          <div className="ad-stat-label">{label}</div>
-          <div className="ad-stat-value">{value ?? <span className="skeleton" style={{ display: 'inline-block', width: 60, height: 28 }}></span>}</div>
+          <div style={{ 
+            fontSize: '0.85rem', 
+            fontWeight: '500', 
+            color: 'var(--gray-500)',
+            marginBottom: '4px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.3px'
+          }}>
+            {label}
+          </div>
+          <div style={{ 
+            fontSize: '1.75rem', 
+            fontWeight: '700', 
+            color: 'var(--gray-900)',
+            lineHeight: '1.2',
+            fontFamily: 'var(--font-display)'
+          }}>
+            {value ?? <span className="skeleton" style={{ display: 'inline-block', width: 60, height: 28 }}></span>}
+          </div>
         </div>
-        <div className={`ad-stat-icon ${iconClass}`}>
+        <div style={{
+          width: '48px',
+          height: '48px',
+          borderRadius: 'var(--radius)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.5rem',
+          background: iconClass === 'blue' ? 'var(--info-light)' : 
+                     iconClass === 'green' ? 'var(--success-light)' : 
+                     iconClass === 'cyan' ? 'var(--info-light)' : 
+                     iconClass === 'yellow' ? 'var(--warning-light)' : 'var(--primary-soft)',
+          color: iconClass === 'blue' ? 'var(--info)' : 
+                 iconClass === 'green' ? 'var(--success)' : 
+                 iconClass === 'cyan' ? 'var(--info)' : 
+                 iconClass === 'yellow' ? 'var(--warning)' : 'var(--primary)'
+        }}>
           <i className={`bi ${icon}`}></i>
         </div>
       </div>
       {sub && (
-        <div className="ad-stat-sub">
-          {subIcon && <i className={`bi ${subIcon}`}></i>}
+        <div style={{
+          marginTop: '12px',
+          paddingTop: '12px',
+          borderTop: '1px solid var(--gray-200)',
+          fontSize: '0.85rem',
+          color: 'var(--gray-600)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}>
+          {subIcon && <i className={`bi ${subIcon}`} style={{ color: 'var(--gray-400)' }}></i>}
           {sub}
         </div>
       )}
@@ -79,7 +121,12 @@ export default function AdminDashboard() {
   return (
     <div>
       {/* Stats Grid */}
-      <div className="ad-stat-grid mb-4">
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+        gap: '20px', 
+        marginBottom: '24px' 
+      }}>
         <StatCard icon="bi-ticket-perforated" iconClass="blue"  label="Total Bookings"   value={fmt(stats?.total_bookings)}    sub={`${fmt(stats?.confirmed_bookings)} confirmed`} subIcon="bi-check-circle" />
         <StatCard icon="bi-cash-stack"        iconClass="green" label="Total Revenue"    value={fmtCur(stats?.total_revenue)}  sub={`${fmtCur(stats?.revenue_today)} today`}      subIcon="bi-calendar-day" />
         <StatCard icon="bi-bus-front"         iconClass="cyan"  label="Active Matatus"   value={fmt(stats?.active_matatus)}    sub={`${fmt(stats?.total_matatus)} total`}         subIcon="bi-info-circle" />
@@ -88,18 +135,18 @@ export default function AdminDashboard() {
         <StatCard icon="bi-calendar-week"     iconClass="green" label="Revenue This Week" value={fmtCur(stats?.revenue_this_week)} sub="last 7 days" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
         {/* Revenue Chart */}
         <div className="ad-card">
           <div className="ad-card-header">
             <span className="ad-card-title">Revenue — Last 14 Days</span>
-            <span style={{ fontSize: '.78rem', color: 'var(--gray-400)' }}>
+            <span className="badge badge-success" style={{ fontSize: '.78rem' }}>
               {fmtCur(stats?.revenue_this_week)} this week
             </span>
           </div>
-          <div style={{ padding: '20px 16px 16px' }}>
+          <div className="ad-card-body">
             <MiniBar data={chart} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: '.7rem', color: 'var(--gray-400)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '.7rem', color: 'var(--gray-400)' }}>
               {chart.slice(-20).length > 1 && (
                 <>
                   <span>{chart[0]?.date}</span>
@@ -111,32 +158,45 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick links */}
-        <div className="ad-card ad-card-pad">
-          <div className="ad-card-title mb-3">Quick Actions</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {[
-              { icon: 'bi-plus-circle', label: 'Add Matatu',    to: '/admin/matatus',    color: 'var(--primary)' },
-              { icon: 'bi-calendar-plus', label: 'New Trip',    to: '/admin/trips',      color: 'var(--success)' },
-              { icon: 'bi-person-plus', label: 'Add Driver',    to: '/admin/drivers',    color: 'var(--warning)' },
-              { icon: 'bi-ticket-perforated', label: 'Bookings',to: '/admin/bookings',   color: 'var(--info)' },
-            ].map(a => (
-              <button
-                key={a.label}
-                onClick={() => navigate(a.to)}
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  gap: 8, padding: '16px 10px',
-                  background: 'var(--gray-50)', border: '1.5px solid var(--gray-200)',
-                  borderRadius: 'var(--radius)', cursor: 'pointer',
-                  transition: 'all .15s', fontFamily: 'var(--font-body)',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = a.color; e.currentTarget.style.background = '#fff'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--gray-200)'; e.currentTarget.style.background = 'var(--gray-50)'; }}
-              >
-                <i className={`bi ${a.icon}`} style={{ fontSize: '1.3rem', color: a.color }}></i>
-                <span style={{ fontSize: '.8rem', fontWeight: 600, color: 'var(--gray-700)' }}>{a.label}</span>
-              </button>
-            ))}
+        <div className="ad-card">
+          <div className="ad-card-header">
+            <span className="ad-card-title">Quick Actions</span>
+          </div>
+          <div className="ad-card-body">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              {[
+                { icon: 'bi-plus-circle', label: 'Add Matatu',    to: '/admin/matatus',    color: 'var(--primary)' },
+                { icon: 'bi-calendar-plus', label: 'New Trip',    to: '/admin/trips',      color: 'var(--success)' },
+                { icon: 'bi-person-plus', label: 'Add Driver',    to: '/admin/drivers',    color: 'var(--warning)' },
+                { icon: 'bi-ticket-perforated', label: 'Bookings', to: '/admin/bookings',   color: 'var(--info)' },
+              ].map(a => (
+                <button
+                  key={a.label}
+                  onClick={() => navigate(a.to)}
+                  className="btn btn-outline-primary"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '20px 12px',
+                    height: 'auto',
+                    borderWidth: '1.5px'
+                  }}
+                  onMouseEnter={e => { 
+                    e.currentTarget.style.borderColor = a.color; 
+                    e.currentTarget.style.backgroundColor = `${a.color}10`;
+                  }}
+                  onMouseLeave={e => { 
+                    e.currentTarget.style.borderColor = 'var(--primary)'; 
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <i className={`bi ${a.icon}`} style={{ fontSize: '1.5rem', color: a.color }}></i>
+                  <span style={{ fontSize: '.85rem', fontWeight: '600' }}>{a.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -145,22 +205,27 @@ export default function AdminDashboard() {
       <div className="ad-card">
         <div className="ad-card-header">
           <span className="ad-card-title">Recent Bookings</span>
-          <button className="btn-ad btn-ad-secondary btn-ad-sm" onClick={() => navigate('/admin/bookings')}>
+          <button className="btn btn-outline-primary btn-sm" onClick={() => navigate('/admin/bookings')}>
             View All <i className="bi bi-arrow-right"></i>
           </button>
         </div>
         {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center' }}>
-            <div className="ad-spinner" style={{ margin: '0 auto' }}></div>
+          <div style={{ padding: '48px', textAlign: 'center' }}>
+            <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+            <p className="text-muted">Loading bookings...</p>
           </div>
         ) : recentBookings.length === 0 ? (
-          <div className="ad-empty">
-            <i className="bi bi-ticket-perforated"></i>
-            <h5>No bookings yet</h5>
-            <p>Bookings will appear here as passengers book seats</p>
+          <div style={{ 
+            padding: '48px', 
+            textAlign: 'center',
+            color: 'var(--gray-400)'
+          }}>
+            <i className="bi bi-ticket-perforated" style={{ fontSize: '3rem', display: 'block', marginBottom: '16px' }}></i>
+            <h5 style={{ color: 'var(--gray-600)', marginBottom: '8px' }}>No bookings yet</h5>
+            <p style={{ fontSize: '0.95rem' }}>Bookings will appear here as passengers book seats</p>
           </div>
         ) : (
-          <div className="ad-table-wrap">
+          <div style={{ overflowX: 'auto' }}>
             <table className="ad-table">
               <thead>
                 <tr>
@@ -175,16 +240,30 @@ export default function AdminDashboard() {
               <tbody>
                 {recentBookings.map(b => (
                   <tr key={b.reference} style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/bookings')}>
-                    <td><code style={{ fontSize: '.78rem' }}>{b.reference}</code></td>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{b.passenger_name}</div>
-                      <div style={{ fontSize: '.75rem', color: 'var(--gray-400)' }}>{b.passenger_phone}</div>
+                      <code style={{ 
+                        fontSize: '.78rem', 
+                        background: 'var(--gray-100)',
+                        padding: '4px 8px',
+                        borderRadius: 'var(--radius-xs)',
+                        color: 'var(--gray-700)'
+                      }}>
+                        {b.reference}
+                      </code>
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: '600', color: 'var(--gray-900)' }}>{b.passenger_name}</div>
+                      <div style={{ fontSize: '.75rem', color: 'var(--gray-500)' }}>{b.passenger_phone}</div>
                     </td>
                     <td style={{ fontSize: '.82rem' }}>{b.route_display || '—'}</td>
                     <td style={{ fontSize: '.82rem', color: 'var(--gray-500)' }}>{b.departure_date || '—'}</td>
-                    <td style={{ fontWeight: 700 }}>KES {Number(b.total_amount).toLocaleString()}</td>
+                    <td style={{ fontWeight: '700', color: 'var(--gray-900)' }}>KES {Number(b.total_amount).toLocaleString()}</td>
                     <td>
-                      <span className={`badge badge-${b.status}`}>{b.status}</span>
+                      <span className={`badge badge-${b.status === 'confirmed' ? 'success' : 
+                                                       b.status === 'pending' ? 'warning' : 
+                                                       b.status === 'cancelled' ? 'danger' : 'info'}`}>
+                        {b.status}
+                      </span>
                     </td>
                   </tr>
                 ))}

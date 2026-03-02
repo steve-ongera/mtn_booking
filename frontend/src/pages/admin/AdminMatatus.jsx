@@ -125,49 +125,70 @@ export default function AdminMatatus() {
   };
 
   const svcBadge = (t) => t === 'express'
-    ? <span className="badge badge-express"><i className="bi bi-lightning-fill"></i> Express</span>
-    : <span className="badge badge-stage"><i className="bi bi-sign-stop-fill"></i> Stage</span>;
+    ? <span className="badge badge-info"><i className="bi bi-lightning-fill"></i> Express</span>
+    : <span className="badge badge-success"><i className="bi bi-sign-stop-fill"></i> Stage</span>;
 
   return (
     <div>
       {/* Header */}
-      <div className="d-flex align-center justify-between flex-wrap gap-2 mb-4">
+      <div className="d-flex align-center justify-between flex-wrap gap-3 mb-4">
         <div>
-          <h4 className="fw-800" style={{ marginBottom: 2 }}>Matatus</h4>
+          <h3 style={{ marginBottom: '4px' }}>Matatus</h3>
           <p className="text-muted" style={{ margin: 0 }}>Manage all registered matatus</p>
         </div>
         <div className="d-flex gap-2 flex-wrap">
           {/* Service type filter */}
-          <div className="ad-tabs">
+          <div className="ad-tabs" style={{ display: 'flex', gap: '4px', background: 'var(--gray-100)', padding: '4px', borderRadius: 'var(--radius)' }}>
             {[['', 'All'], ['stage', 'Stage'], ['express', 'Express']].map(([v, l]) => (
-              <button key={v} className={`ad-tab ${filterType === v ? 'active' : ''}`}
-                onClick={() => setFilter(v)}>{l}</button>
+              <button 
+                key={v} 
+                className={`btn btn-sm ${filterType === v ? 'btn-primary' : 'btn-outline'}`}
+                style={{ border: 'none' }}
+                onClick={() => setFilter(v)}
+              >
+                {l}
+              </button>
             ))}
           </div>
-          <div className="ad-search-wrap">
+          
+          {/* Search */}
+          <div className="ad-search" style={{ position: 'relative' }}>
             <i className="bi bi-search"></i>
-            <input className="ad-search-input" placeholder="Search…" value={search}
-              onChange={e => setSearch(e.target.value)} />
+            <input 
+              className="form-control" 
+              placeholder="Search matatus..." 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ width: '250px' }}
+            />
           </div>
-          <button className="btn-ad btn-ad-primary" onClick={openAdd}>
+          
+          {/* Add Button */}
+          <button className="btn btn-primary" onClick={openAdd}>
             <i className="bi bi-plus-lg"></i> Add Matatu
           </button>
         </div>
       </div>
 
+      {/* Main Card */}
       <div className="ad-card">
         {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center' }}>
-            <div className="ad-spinner" style={{ margin: '0 auto' }}></div>
+          <div style={{ padding: '48px', textAlign: 'center' }}>
+            <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+            <p className="text-muted">Loading matatus...</p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="ad-empty">
-            <i className="bi bi-bus-front"></i>
-            <h5>No matatus found</h5>
-            <p>Add your first matatu to get started</p>
+          <div style={{ 
+            padding: '48px', 
+            textAlign: 'center',
+            color: 'var(--gray-400)'
+          }}>
+            <i className="bi bi-bus-front" style={{ fontSize: '3rem', display: 'block', marginBottom: '16px' }}></i>
+            <h5 style={{ color: 'var(--gray-600)', marginBottom: '8px' }}>No matatus found</h5>
+            <p style={{ fontSize: '0.95rem' }}>Add your first matatu to get started</p>
           </div>
         ) : (
-          <div className="ad-table-wrap">
+          <div style={{ overflowX: 'auto' }}>
             <table className="ad-table">
               <thead>
                 <tr>
@@ -186,11 +207,11 @@ export default function AdminMatatus() {
                 {filtered.map(m => (
                   <tr key={m.slug}>
                     <td>
-                      <div className="fw-700">{m.name}</div>
+                      <div style={{ fontWeight: '600', color: 'var(--gray-900)' }}>{m.name}</div>
                       {(m.amenities || []).length > 0 && (
-                        <div className="d-flex gap-1 flex-wrap mt-1">
+                        <div className="d-flex gap-1 flex-wrap" style={{ marginTop: '4px' }}>
                           {m.amenities.slice(0, 3).map(a => (
-                            <span key={a} className="ad-tag" style={{ fontSize: '.62rem' }}>{a}</span>
+                            <span key={a} className="badge badge-info" style={{ fontSize: '.62rem' }}>{a}</span>
                           ))}
                           {m.amenities.length > 3 && (
                             <span className="text-muted" style={{ fontSize: '.7rem' }}>+{m.amenities.length - 3}</span>
@@ -198,40 +219,66 @@ export default function AdminMatatus() {
                         </div>
                       )}
                     </td>
-                    <td><code>{m.plate_number}</code></td>
+                    <td><code style={{ 
+                      background: 'var(--gray-100)',
+                      padding: '4px 8px',
+                      borderRadius: 'var(--radius-xs)',
+                      color: 'var(--gray-700)'
+                    }}>{m.plate_number}</code></td>
                     <td style={{ fontSize: '.82rem', color: 'var(--gray-600)' }}>{m.matatu_type_name || '—'}</td>
                     <td style={{ fontSize: '.82rem' }}>{m.route_name || <span className="text-muted">No route</span>}</td>
                     <td>{svcBadge(m.service_type)}</td>
                     <td>
-                      <span style={{ fontWeight: 600 }}>{m.seat_count || m.total_seats}</span>
+                      <span style={{ fontWeight: '600' }}>{m.seat_count || m.total_seats}</span>
                       <span className="text-muted"> seats</span>
                     </td>
                     <td style={{ fontSize: '.82rem' }}>
-                      {m.driver_name
-                        ? <span><i className="bi bi-person-fill" style={{ color: 'var(--success)', marginRight: 4 }}></i>{m.driver_name}</span>
-                        : <span className="text-muted">—</span>}
+                      {m.driver_name ? (
+                        <span>
+                          <i className="bi bi-person-fill" style={{ color: 'var(--success)', marginRight: '4px' }}></i>
+                          {m.driver_name}
+                        </span>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
                     </td>
                     <td>
-                      <span className={`badge ${m.is_active ? 'badge-active' : 'badge-inactive'}`}>
+                      <span className={`badge ${m.is_active ? 'badge-success' : 'badge-danger'}`}>
                         {m.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td>
-                      <div className="actions">
-                        <button className="btn-ad btn-ad-secondary btn-ad-sm" onClick={() => openEdit(m)} data-tip="Edit">
+                      <div className="d-flex gap-1">
+                        <button 
+                          className="btn btn-sm btn-outline-primary" 
+                          onClick={() => openEdit(m)} 
+                          title="Edit"
+                          style={{ padding: '6px 10px' }}
+                        >
                           <i className="bi bi-pencil"></i>
                         </button>
                         <button
-                          className="btn-ad btn-ad-secondary btn-ad-sm"
+                          className="btn btn-sm btn-outline-primary"
                           onClick={() => navigate(`/admin/matatus/${m.slug}/layout`)}
-                          data-tip="Seat Layout"
+                          title="Seat Layout"
+                          style={{ padding: '6px 10px' }}
                         >
                           <i className="bi bi-grid-3x3-gap"></i>
                         </button>
-                        <button className="btn-ad btn-ad-secondary btn-ad-sm" onClick={() => openAssign(m)} data-tip="Assign Driver">
+                        <button 
+                          className="btn btn-sm btn-outline-primary" 
+                          onClick={() => openAssign(m)} 
+                          title="Assign Driver"
+                          style={{ padding: '6px 10px' }}
+                        >
                           <i className="bi bi-person-check"></i>
                         </button>
-                        <button className="btn-ad btn-ad-danger btn-ad-sm" onClick={() => handleDelete(m)} data-tip="Delete">
+                        <button 
+                          className="btn btn-sm btn-outline-danger" 
+                          onClick={() => handleDelete(m)} 
+                          title="Delete"
+                          style={{ padding: '6px 10px' }}
+                        >
                           <i className="bi bi-trash"></i>
                         </button>
                       </div>
@@ -246,79 +293,140 @@ export default function AdminMatatus() {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="ad-modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="ad-modal ad-modal-md">
-            <div className="ad-modal-header">
-              <span className="ad-modal-title">
-                <i className="bi bi-bus-front" style={{ marginRight: 8, color: 'var(--primary)' }}></i>
+        <div 
+          className="ad-modal-overlay" 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={e => e.target === e.currentTarget && setShowModal(false)}
+        >
+          <div className="ad-card" style={{ width: '600px', maxWidth: '90vw' }}>
+            <div className="ad-card-header">
+              <span className="ad-card-title">
+                <i className="bi bi-bus-front" style={{ marginRight: '8px', color: 'var(--primary)' }}></i>
                 {editing ? 'Edit Matatu' : 'Add New Matatu'}
               </span>
-              <button className="ad-modal-close" onClick={() => setShowModal(false)}>
+              <button 
+                className="btn btn-sm btn-outline" 
+                onClick={() => setShowModal(false)}
+                style={{ border: 'none', padding: '8px' }}
+              >
                 <i className="bi bi-x-lg"></i>
               </button>
             </div>
-            <div className="ad-modal-body">
-              {error && <div className="ad-alert ad-alert-error"><i className="bi bi-exclamation-circle-fill"></i>{error}</div>}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="ad-form-group" style={{ gridColumn: '1/-1' }}>
-                  <label className="ad-label">Matatu Name *</label>
-                  <input className="ad-input" placeholder="e.g. Kiserian Express" value={form.name}
-                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            <div className="ad-card-body">
+              {error && (
+                <div className="alert alert-danger" style={{ marginBottom: '20px' }}>
+                  <i className="bi bi-exclamation-circle-fill"></i>
+                  {error}
                 </div>
-                <div className="ad-form-group">
-                  <label className="ad-label">Plate Number *</label>
-                  <input className="ad-input" placeholder="KAA 000A" value={form.plate_number}
-                    onChange={e => setForm(f => ({ ...f, plate_number: e.target.value.toUpperCase() }))} />
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-group" style={{ gridColumn: '1/-1' }}>
+                  <label className="form-label">Matatu Name *</label>
+                  <input 
+                    className="form-control" 
+                    placeholder="e.g. Kiserian Express" 
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))} 
+                  />
                 </div>
-                <div className="ad-form-group">
-                  <label className="ad-label">Service Type</label>
-                  <select className="ad-select" value={form.service_type}
-                    onChange={e => setForm(f => ({ ...f, service_type: e.target.value }))}>
+                <div className="form-group">
+                  <label className="form-label">Plate Number *</label>
+                  <input 
+                    className="form-control" 
+                    placeholder="KAA 000A" 
+                    value={form.plate_number}
+                    onChange={e => setForm(f => ({ ...f, plate_number: e.target.value.toUpperCase() }))} 
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Service Type</label>
+                  <select 
+                    className="form-control" 
+                    value={form.service_type}
+                    onChange={e => setForm(f => ({ ...f, service_type: e.target.value }))}
+                  >
                     <option value="stage">Stage (Fill & Go)</option>
                     <option value="express">Express (Scheduled)</option>
                   </select>
                 </div>
-                <div className="ad-form-group">
-                  <label className="ad-label">Matatu Type</label>
-                  <select className="ad-select" value={form.matatu_type_id}
-                    onChange={e => setForm(f => ({ ...f, matatu_type_id: e.target.value }))}>
+                <div className="form-group">
+                  <label className="form-label">Matatu Type</label>
+                  <select 
+                    className="form-control" 
+                    value={form.matatu_type_id}
+                    onChange={e => setForm(f => ({ ...f, matatu_type_id: e.target.value }))}
+                  >
                     <option value="">Select type</option>
                     {types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
                 </div>
-                <div className="ad-form-group">
-                  <label className="ad-label">Route</label>
-                  <select className="ad-select" value={form.route_id}
-                    onChange={e => setForm(f => ({ ...f, route_id: e.target.value }))}>
+                <div className="form-group">
+                  <label className="form-label">Route</label>
+                  <select 
+                    className="form-control" 
+                    value={form.route_id}
+                    onChange={e => setForm(f => ({ ...f, route_id: e.target.value }))}
+                  >
                     <option value="">Select route</option>
                     {routes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                   </select>
                 </div>
-                <div className="ad-form-group">
-                  <label className="ad-label">Total Seats</label>
-                  <input className="ad-input" type="number" min={1} max={60} value={form.total_seats}
-                    onChange={e => setForm(f => ({ ...f, total_seats: e.target.value }))} />
+                <div className="form-group">
+                  <label className="form-label">Total Seats</label>
+                  <input 
+                    className="form-control" 
+                    type="number" 
+                    min={1} 
+                    max={60} 
+                    value={form.total_seats}
+                    onChange={e => setForm(f => ({ ...f, total_seats: e.target.value }))} 
+                  />
                 </div>
-                <div className="ad-form-group">
-                  <label className="ad-label">Status</label>
-                  <select className="ad-select" value={form.is_active ? 'true' : 'false'}
-                    onChange={e => setForm(f => ({ ...f, is_active: e.target.value === 'true' }))}>
+                <div className="form-group">
+                  <label className="form-label">Status</label>
+                  <select 
+                    className="form-control" 
+                    value={form.is_active ? 'true' : 'false'}
+                    onChange={e => setForm(f => ({ ...f, is_active: e.target.value === 'true' }))}
+                  >
                     <option value="true">Active</option>
                     <option value="false">Inactive</option>
                   </select>
                 </div>
-                <div className="ad-form-group" style={{ gridColumn: '1/-1' }}>
-                  <label className="ad-label">Amenities (comma-separated)</label>
-                  <input className="ad-input" placeholder="WiFi, AC, USB, Music" value={form.amenities}
-                    onChange={e => setForm(f => ({ ...f, amenities: e.target.value }))} />
+                <div className="form-group" style={{ gridColumn: '1/-1' }}>
+                  <label className="form-label">Amenities (comma-separated)</label>
+                  <input 
+                    className="form-control" 
+                    placeholder="WiFi, AC, USB, Music" 
+                    value={form.amenities}
+                    onChange={e => setForm(f => ({ ...f, amenities: e.target.value }))} 
+                  />
                 </div>
               </div>
             </div>
-            <div className="ad-modal-footer">
-              <button className="btn-ad btn-ad-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-              <button className="btn-ad btn-ad-primary" onClick={handleSave} disabled={saving}>
-                {saving ? <><div className="ad-spinner ad-spinner-sm ad-spinner-white"></div> Saving...</>
-                        : <><i className="bi bi-check-lg"></i> Save Matatu</>}
+            <div style={{ 
+              padding: '20px 24px', 
+              borderTop: '1px solid var(--gray-200)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px'
+            }}>
+              <button className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <><div className="spinner" style={{ width: '18px', height: '18px', marginRight: '8px' }}></div> Saving...</>
+                ) : (
+                  <><i className="bi bi-check-lg"></i> Save Matatu</>
+                )}
               </button>
             </div>
           </div>
@@ -327,17 +435,39 @@ export default function AdminMatatus() {
 
       {/* Assign Driver Modal */}
       {showAssign && assignTarget && (
-        <div className="ad-modal-overlay" onClick={e => e.target === e.currentTarget && setShowAssign(false)}>
-          <div className="ad-modal ad-modal-sm">
-            <div className="ad-modal-header">
-              <span className="ad-modal-title">Assign Driver — {assignTarget.name}</span>
-              <button className="ad-modal-close" onClick={() => setShowAssign(false)}><i className="bi bi-x-lg"></i></button>
+        <div 
+          className="ad-modal-overlay" 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={e => e.target === e.currentTarget && setShowAssign(false)}
+        >
+          <div className="ad-card" style={{ width: '450px', maxWidth: '90vw' }}>
+            <div className="ad-card-header">
+              <span className="ad-card-title">Assign Driver — {assignTarget.name}</span>
+              <button 
+                className="btn btn-sm btn-outline" 
+                onClick={() => setShowAssign(false)}
+                style={{ border: 'none', padding: '8px' }}
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
             </div>
-            <div className="ad-modal-body">
-              <div className="ad-form-group">
-                <label className="ad-label">Select Driver</label>
-                <select className="ad-select" value={assignDriverId}
-                  onChange={e => setAssignDriverId(e.target.value)}>
+            <div className="ad-card-body">
+              <div className="form-group">
+                <label className="form-label">Select Driver</label>
+                <select 
+                  className="form-control" 
+                  value={assignDriverId}
+                  onChange={e => setAssignDriverId(e.target.value)}
+                >
                   <option value="">Choose a driver</option>
                   {drivers.filter(d => d.status === 'active').map(d => (
                     <option key={d.id} value={d.id}>{d.full_name} — {d.phone}</option>
@@ -345,11 +475,20 @@ export default function AdminMatatus() {
                 </select>
               </div>
             </div>
-            <div className="ad-modal-footer">
-              <button className="btn-ad btn-ad-secondary" onClick={() => setShowAssign(false)}>Cancel</button>
-              <button className="btn-ad btn-ad-primary" onClick={handleAssign} disabled={saving || !assignDriverId}>
-                {saving ? <><div className="ad-spinner ad-spinner-sm ad-spinner-white"></div> Assigning...</>
-                        : <><i className="bi bi-person-check"></i> Assign</>}
+            <div style={{ 
+              padding: '20px 24px', 
+              borderTop: '1px solid var(--gray-200)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px'
+            }}>
+              <button className="btn btn-outline" onClick={() => setShowAssign(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleAssign} disabled={saving || !assignDriverId}>
+                {saving ? (
+                  <><div className="spinner" style={{ width: '18px', height: '18px', marginRight: '8px' }}></div> Assigning...</>
+                ) : (
+                  <><i className="bi bi-person-check"></i> Assign</>
+                )}
               </button>
             </div>
           </div>

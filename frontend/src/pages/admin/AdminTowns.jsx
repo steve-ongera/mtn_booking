@@ -78,22 +78,51 @@ export default function AdminTowns() {
 
   return (
     <div>
-      <div className="d-flex align-center justify-between flex-wrap gap-2 mb-4">
+      {/* Header */}
+      <div className="d-flex align-center justify-between flex-wrap gap-3 mb-4">
         <div>
-          <h4 className="fw-800" style={{ marginBottom:2 }}>Towns & Stages</h4>
-          <p className="text-muted" style={{ margin:0 }}>Manage towns and matatu stages/terminuses</p>
+          <h3 style={{ marginBottom: '4px' }}>Towns & Stages</h3>
+          <p className="text-muted" style={{ margin: 0 }}>Manage towns and matatu stages/terminuses</p>
         </div>
         <div className="d-flex gap-2 flex-wrap">
-          <div className="ad-tabs">
-            <button className={`ad-tab ${activeTab === 'towns' ? 'active' : ''}`} onClick={() => setTab('towns')}>Towns</button>
-            <button className={`ad-tab ${activeTab === 'stages' ? 'active' : ''}`} onClick={() => setTab('stages')}>Stages</button>
+          {/* Tabs */}
+          <div className="ad-tabs" style={{ 
+            display: 'flex', 
+            gap: '4px', 
+            background: 'var(--gray-100)', 
+            padding: '4px', 
+            borderRadius: 'var(--radius)' 
+          }}>
+            <button 
+              className={`btn btn-sm ${activeTab === 'towns' ? 'btn-primary' : 'btn-outline'}`}
+              style={{ border: 'none' }}
+              onClick={() => setTab('towns')}
+            >
+              Towns
+            </button>
+            <button 
+              className={`btn btn-sm ${activeTab === 'stages' ? 'btn-primary' : 'btn-outline'}`}
+              style={{ border: 'none' }}
+              onClick={() => setTab('stages')}
+            >
+              Stages
+            </button>
           </div>
-          <div className="ad-search-wrap">
+
+          {/* Search */}
+          <div className="ad-search" style={{ position: 'relative' }}>
             <i className="bi bi-search"></i>
-            <input className="ad-search-input" placeholder={`Search ${activeTab}…`} value={search}
-              onChange={e => setSearch(e.target.value)} />
+            <input 
+              className="form-control" 
+              placeholder={`Search ${activeTab}...`} 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ width: '220px' }}
+            />
           </div>
-          <button className="btn-ad btn-ad-primary" onClick={() => openAdd(activeTab === 'towns' ? 'town' : 'stage')}>
+          
+          {/* Add Button */}
+          <button className="btn btn-primary" onClick={() => openAdd(activeTab === 'towns' ? 'town' : 'stage')}>
             <i className="bi bi-plus-lg"></i> Add {activeTab === 'towns' ? 'Town' : 'Stage'}
           </button>
         </div>
@@ -103,38 +132,83 @@ export default function AdminTowns() {
       {activeTab === 'towns' && (
         <div className="ad-card">
           {loading ? (
-            <div style={{ padding:'3rem', textAlign:'center' }}><div className="ad-spinner" style={{ margin:'0 auto' }}></div></div>
+            <div style={{ padding: '48px', textAlign: 'center' }}>
+              <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+              <p className="text-muted">Loading towns...</p>
+            </div>
           ) : towns.length === 0 ? (
-            <div className="ad-empty"><i className="bi bi-geo-alt"></i><h5>No towns yet</h5><p>Add towns that MTN Sacco serves</p></div>
+            <div style={{ 
+              padding: '48px', 
+              textAlign: 'center',
+              color: 'var(--gray-400)'
+            }}>
+              <i className="bi bi-geo-alt" style={{ fontSize: '3rem', display: 'block', marginBottom: '16px' }}></i>
+              <h5 style={{ color: 'var(--gray-600)', marginBottom: '8px' }}>No towns yet</h5>
+              <p style={{ fontSize: '0.95rem' }}>Add towns that MTN Sacco serves</p>
+            </div>
           ) : (
-            <div className="ad-table-wrap">
+            <div style={{ overflowX: 'auto' }}>
               <table className="ad-table">
-                <thead><tr><th>Town</th><th>Stages</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Town</th>
+                    <th>Stages</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {towns.map(t => (
                     <tr key={t.slug}>
-                      <td className="fw-700">{t.name}</td>
+                      <td style={{ fontWeight: '600', color: 'var(--gray-900)' }}>{t.name}</td>
                       <td>
-                        <div className="d-flex gap-1 flex-wrap">
+                        <div className="d-flex gap-1 flex-wrap" style={{ maxWidth: '300px' }}>
                           {stagesForTown(t.id).slice(0, 4).map(s => (
-                            <span key={s.id} className="ad-tag">{s.name}</span>
+                            <span key={s.id} className="badge badge-info" style={{ fontSize: '.75rem' }}>{s.name}</span>
                           ))}
                           {stagesForTown(t.id).length > 4 && (
-                            <span className="text-muted" style={{ fontSize:'.75rem' }}>+{stagesForTown(t.id).length - 4} more</span>
+                            <span className="text-muted" style={{ fontSize: '.75rem', paddingLeft: '4px' }}>
+                              +{stagesForTown(t.id).length - 4} more
+                            </span>
                           )}
-                          {stagesForTown(t.id).length === 0 && <span className="text-muted">No stages</span>}
+                          {stagesForTown(t.id).length === 0 && (
+                            <span className="text-muted" style={{ fontSize: '.82rem' }}>No stages</span>
+                          )}
                         </div>
                       </td>
-                      <td><span className={`badge ${t.is_active ? 'badge-active' : 'badge-inactive'}`}>{t.is_active ? 'Active' : 'Inactive'}</span></td>
                       <td>
-                        <div className="actions">
-                          <button className="btn-ad btn-ad-secondary btn-ad-sm" onClick={() => { setTab('stages'); openAdd('stage'); setTimeout(() => setForm(f => ({ ...f, town_id: String(t.id) })), 0); }} data-tip="Add Stage">
+                        <span className={`badge ${t.is_active ? 'badge-success' : 'badge-danger'}`}>
+                          {t.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="d-flex gap-1">
+                          <button 
+                            className="btn btn-sm btn-outline-primary" 
+                            onClick={() => { 
+                              setTab('stages'); 
+                              openAdd('stage'); 
+                              setTimeout(() => setForm(f => ({ ...f, town_id: String(t.id) })), 0); 
+                            }} 
+                            title="Add Stage"
+                            style={{ padding: '6px 10px' }}
+                          >
                             <i className="bi bi-plus-lg"></i>
                           </button>
-                          <button className="btn-ad btn-ad-secondary btn-ad-sm" onClick={() => openEdit(t, 'town')} data-tip="Edit">
+                          <button 
+                            className="btn btn-sm btn-outline-primary" 
+                            onClick={() => openEdit(t, 'town')} 
+                            title="Edit"
+                            style={{ padding: '6px 10px' }}
+                          >
                             <i className="bi bi-pencil"></i>
                           </button>
-                          <button className="btn-ad btn-ad-danger btn-ad-sm" onClick={() => handleDeleteTown(t.slug, t.name)} data-tip="Delete">
+                          <button 
+                            className="btn btn-sm btn-outline-danger" 
+                            onClick={() => handleDeleteTown(t.slug, t.name)} 
+                            title="Delete"
+                            style={{ padding: '6px 10px' }}
+                          >
                             <i className="bi bi-trash"></i>
                           </button>
                         </div>
@@ -152,26 +226,66 @@ export default function AdminTowns() {
       {activeTab === 'stages' && (
         <div className="ad-card">
           {loading ? (
-            <div style={{ padding:'3rem', textAlign:'center' }}><div className="ad-spinner" style={{ margin:'0 auto' }}></div></div>
+            <div style={{ padding: '48px', textAlign: 'center' }}>
+              <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+              <p className="text-muted">Loading stages...</p>
+            </div>
           ) : stages.length === 0 ? (
-            <div className="ad-empty"><i className="bi bi-sign-stop"></i><h5>No stages yet</h5><p>Add matatu stages for towns</p></div>
+            <div style={{ 
+              padding: '48px', 
+              textAlign: 'center',
+              color: 'var(--gray-400)'
+            }}>
+              <i className="bi bi-sign-stop" style={{ fontSize: '3rem', display: 'block', marginBottom: '16px' }}></i>
+              <h5 style={{ color: 'var(--gray-600)', marginBottom: '8px' }}>No stages yet</h5>
+              <p style={{ fontSize: '0.95rem' }}>Add matatu stages for towns</p>
+            </div>
           ) : (
-            <div className="ad-table-wrap">
+            <div style={{ overflowX: 'auto' }}>
               <table className="ad-table">
-                <thead><tr><th>Stage Name</th><th>Town</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Stage Name</th>
+                    <th>Town</th>
+                    <th>Address</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {stages.map(s => (
                     <tr key={s.slug}>
-                      <td className="fw-600">{s.name}</td>
-                      <td><span className="ad-tag"><i className="bi bi-geo-alt" style={{ marginRight:3 }}></i>{s.town_name}</span></td>
-                      <td style={{ fontSize:'.82rem', color:'var(--gray-500)' }}>{s.address || <span className="text-muted">—</span>}</td>
-                      <td><span className={`badge ${s.is_active ? 'badge-active' : 'badge-inactive'}`}>{s.is_active ? 'Active' : 'Inactive'}</span></td>
+                      <td style={{ fontWeight: '500' }}>{s.name}</td>
                       <td>
-                        <div className="actions">
-                          <button className="btn-ad btn-ad-secondary btn-ad-sm" onClick={() => openEdit(s, 'stage')} data-tip="Edit">
+                        <span className="badge badge-info">
+                          <i className="bi bi-geo-alt" style={{ marginRight: '3px' }}></i>
+                          {s.town_name}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: '.82rem', color: 'var(--gray-600)' }}>
+                        {s.address || <span className="text-muted">—</span>}
+                      </td>
+                      <td>
+                        <span className={`badge ${s.is_active ? 'badge-success' : 'badge-danger'}`}>
+                          {s.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="d-flex gap-1">
+                          <button 
+                            className="btn btn-sm btn-outline-primary" 
+                            onClick={() => openEdit(s, 'stage')} 
+                            title="Edit"
+                            style={{ padding: '6px 10px' }}
+                          >
                             <i className="bi bi-pencil"></i>
                           </button>
-                          <button className="btn-ad btn-ad-danger btn-ad-sm" onClick={() => handleDeleteStage(s.slug, s.name)} data-tip="Delete">
+                          <button 
+                            className="btn btn-sm btn-outline-danger" 
+                            onClick={() => handleDeleteStage(s.slug, s.name)} 
+                            title="Delete"
+                            style={{ padding: '6px 10px' }}
+                          >
                             <i className="bi bi-trash"></i>
                           </button>
                         </div>
@@ -187,57 +301,112 @@ export default function AdminTowns() {
 
       {/* Modal */}
       {showModal && (
-        <div className="ad-modal-overlay" onClick={e => e.target === e.currentTarget && setModal(false)}>
-          <div className="ad-modal ad-modal-sm">
-            <div className="ad-modal-header">
-              <span className="ad-modal-title">
-                <i className={`bi ${editType === 'town' ? 'bi-geo-alt' : 'bi-sign-stop'}`} style={{ marginRight:8, color:'var(--primary)' }}></i>
+        <div 
+          className="ad-modal-overlay" 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={e => e.target === e.currentTarget && setModal(false)}
+        >
+          <div className="ad-card" style={{ width: '450px', maxWidth: '90vw' }}>
+            <div className="ad-card-header">
+              <span className="ad-card-title">
+                <i className={`bi ${editType === 'town' ? 'bi-geo-alt' : 'bi-sign-stop'}`} style={{ marginRight: '8px', color: 'var(--primary)' }}></i>
                 {editing ? `Edit ${editType === 'town' ? 'Town' : 'Stage'}` : `Add ${editType === 'town' ? 'Town' : 'Stage'}`}
               </span>
-              <button className="ad-modal-close" onClick={() => setModal(false)}><i className="bi bi-x-lg"></i></button>
+              <button 
+                className="btn btn-sm btn-outline" 
+                onClick={() => setModal(false)}
+                style={{ border: 'none', padding: '8px' }}
+              >
+                <i className="bi bi-x-lg"></i>
+              </button>
             </div>
-            <div className="ad-modal-body">
-              {error && <div className="ad-alert ad-alert-error"><i className="bi bi-exclamation-circle-fill"></i>{error}</div>}
-              <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
+            <div className="ad-card-body">
+              {error && (
+                <div className="alert alert-danger" style={{ marginBottom: '20px' }}>
+                  <i className="bi bi-exclamation-circle-fill"></i>
+                  {error}
+                </div>
+              )}
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Town selection for stages */}
                 {editType === 'stage' && (
-                  <div className="ad-form-group">
-                    <label className="ad-label">Town *</label>
-                    <select className="ad-select" value={form.town_id}
-                      onChange={e => setForm(f => ({ ...f, town_id: e.target.value }))}>
+                  <div className="form-group">
+                    <label className="form-label">Town *</label>
+                    <select 
+                      className="form-control" 
+                      value={form.town_id}
+                      onChange={e => setForm(f => ({ ...f, town_id: e.target.value }))}
+                    >
                       <option value="">Select town</option>
-                      {towns.filter(t => t.is_active).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      {towns.filter(t => t.is_active).map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
                     </select>
                   </div>
                 )}
-                <div className="ad-form-group">
-                  <label className="ad-label">{editType === 'town' ? 'Town Name' : 'Stage Name'} *</label>
-                  <input className="ad-input"
+
+                {/* Name field */}
+                <div className="form-group">
+                  <label className="form-label">{editType === 'town' ? 'Town Name' : 'Stage Name'} *</label>
+                  <input 
+                    className="form-control"
                     placeholder={editType === 'town' ? "e.g. Murang'a" : "e.g. CBD Stage"}
                     value={form.name}
-                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))} 
+                  />
                 </div>
+
+                {/* Address for stages */}
                 {editType === 'stage' && (
-                  <div className="ad-form-group">
-                    <label className="ad-label">Address / Landmark</label>
-                    <input className="ad-input" placeholder="e.g. Near Total Petrol Station"
+                  <div className="form-group">
+                    <label className="form-label">Address / Landmark</label>
+                    <input 
+                      className="form-control" 
+                      placeholder="e.g. Near Total Petrol Station"
                       value={form.address}
-                      onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
+                      onChange={e => setForm(f => ({ ...f, address: e.target.value }))} 
+                    />
                   </div>
                 )}
-                <div className="ad-form-group">
-                  <label className="ad-label">Status</label>
-                  <select className="ad-select" value={form.is_active ? 'true' : 'false'}
-                    onChange={e => setForm(f => ({ ...f, is_active: e.target.value === 'true' }))}>
+
+                {/* Status */}
+                <div className="form-group">
+                  <label className="form-label">Status</label>
+                  <select 
+                    className="form-control" 
+                    value={form.is_active ? 'true' : 'false'}
+                    onChange={e => setForm(f => ({ ...f, is_active: e.target.value === 'true' }))}
+                  >
                     <option value="true">Active</option>
                     <option value="false">Inactive</option>
                   </select>
                 </div>
               </div>
             </div>
-            <div className="ad-modal-footer">
-              <button className="btn-ad btn-ad-secondary" onClick={() => setModal(false)}>Cancel</button>
-              <button className="btn-ad btn-ad-primary" onClick={handleSave} disabled={saving}>
-                {saving ? <><div className="ad-spinner ad-spinner-sm ad-spinner-white"></div> Saving...</> : <><i className="bi bi-check-lg"></i> Save</>}
+            <div style={{ 
+              padding: '20px 24px', 
+              borderTop: '1px solid var(--gray-200)',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px'
+            }}>
+              <button className="btn btn-outline" onClick={() => setModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <><div className="spinner" style={{ width: '18px', height: '18px', marginRight: '8px' }}></div> Saving...</>
+                ) : (
+                  <><i className="bi bi-check-lg"></i> Save</>
+                )}
               </button>
             </div>
           </div>

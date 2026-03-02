@@ -53,7 +53,7 @@ export default function AdminLayout() {
 
   // Initials for avatar
   const initials = user
-    ? `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() || user.username?.[0]?.toUpperCase()
+    ? `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() || user.username?.[0]?.toUpperCase() || 'A'
     : 'A';
 
   return (
@@ -63,8 +63,12 @@ export default function AdminLayout() {
         <div
           onClick={() => setSideOpen(false)}
           style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)',
-            zIndex: 99, display: 'none',
+            position: 'fixed', 
+            inset: 0, 
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 99,
+            display: 'none',
           }}
           className="mobile-overlay"
         />
@@ -72,22 +76,28 @@ export default function AdminLayout() {
 
       {/* ── Sidebar ── */}
       <aside className={`ad-sidebar ${sideOpen ? 'open' : ''}`}>
-        {/* Logo */}
-        <div className="ad-sidebar-logo">
-          <div className="ad-logo-icon">
-            <i className="bi bi-bus-front-fill"></i>
-          </div>
-          <div>
-            <div className="ad-logo-text">MTN Sacco</div>
-            <div className="ad-logo-sub">Admin Panel</div>
+        {/* Header with Logo */}
+        <div className="ad-sidebar-header">
+          <div className="ad-logo">
+            <div className="ad-logo-icon">
+              <i className="bi bi-bus-front-fill"></i>
+            </div>
+            <div className="ad-logo-text">
+              <span className="ad-logo-main">MTN Sacco</span>
+              <span className="ad-logo-sub">Admin Panel</span>
+            </div>
           </div>
         </div>
 
-        {/* Nav */}
-        <nav className="ad-sidebar-nav">
+        {/* Navigation */}
+        <div className="ad-sidebar-nav">
           {NAV.map((item, i) => {
             if (item.section) {
-              return <div key={i} className="ad-nav-label">{item.section}</div>;
+              return (
+                <div key={i} className="ad-nav-section">
+                  <div className="ad-nav-label">{item.section}</div>
+                </div>
+              );
             }
             return (
               <NavLink
@@ -96,54 +106,64 @@ export default function AdminLayout() {
                 className={({ isActive }) => `ad-nav-item ${isActive ? 'active' : ''}`}
                 onClick={() => setSideOpen(false)}
               >
-                <i className={`bi ${item.icon} nav-icon`}></i>
+                <i className={`bi ${item.icon}`}></i>
                 <span>{item.label}</span>
               </NavLink>
             );
           })}
-        </nav>
+        </div>
 
-        {/* Footer */}
+        {/* Footer with Logout */}
         <div className="ad-sidebar-footer">
           <button
             className="ad-nav-item w-100"
             onClick={handleLogout}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', fontFamily: 'var(--font-body)' }}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              cursor: 'pointer',
+              width: '100%',
+              textAlign: 'left',
+              color: 'var(--danger)',
+              fontFamily: 'var(--font-body)',
+              fontSize: '0.95rem'
+            }}
           >
-            <i className="bi bi-box-arrow-left nav-icon"></i>
+            <i className="bi bi-box-arrow-left" style={{ color: 'var(--danger)' }}></i>
             <span>Sign Out</span>
           </button>
         </div>
       </aside>
 
-      {/* ── Main ── */}
+      {/* ── Main Content Area ── */}
       <div className="ad-main">
         {/* Topbar */}
         <header className="ad-topbar">
-          <button
-            className="btn-ad btn-ad-ghost btn-ad-sm"
-            onClick={() => setSideOpen(v => !v)}
-            style={{ display: 'none', padding: 6 }}
-            id="menu-toggle"
-          >
-            <i className="bi bi-list" style={{ fontSize: '1.2rem' }}></i>
-          </button>
-
-          <div className="ad-topbar-title">{pageTitle}</div>
-
-          <div className="ad-topbar-actions">
-            <div style={{ fontSize: '.82rem', color: 'var(--gray-500)', textAlign: 'right' }}>
-              <div style={{ fontWeight: 600, color: 'var(--gray-700)' }}>
-                {user?.first_name ? `${user.first_name} ${user.last_name}` : user?.username}
-              </div>
-              <div>{user?.is_superuser ? 'Superuser' : 'Admin'}</div>
-            </div>
-            <div
-              className="ad-avatar"
-              title={user?.username}
-              onClick={() => navigate('/admin/dashboard')}
+          <div className="ad-topbar-left">
+            <button
+              className="ad-menu-toggle"
+              onClick={() => setSideOpen(v => !v)}
+              aria-label="Toggle menu"
             >
-              {initials}
+              <i className="bi bi-list"></i>
+            </button>
+            <h1 className="ad-page-title">{pageTitle}</h1>
+          </div>
+
+          <div className="ad-topbar-right">
+            {/* User Info */}
+            <div className="ad-user" onClick={() => navigate('/admin/dashboard')}>
+              <div className="ad-user-avatar">
+                {initials}
+              </div>
+              <div className="ad-user-info">
+                <span className="ad-user-name">
+                  {user?.first_name ? `${user.first_name} ${user.last_name}` : user?.username}
+                </span>
+                <span className="ad-user-role">
+                  {user?.is_superuser ? 'Superuser' : 'Admin'}
+                </span>
+              </div>
             </div>
           </div>
         </header>

@@ -185,233 +185,297 @@ export default function AdminSeatLayout() {
   const realSeats = grid.filter(s => !s.is_aisle_gap && !s.is_driver_seat && !s.is_conductor_seat);
 
   if (loading) return (
-    <div style={{ textAlign: 'center', padding: '4rem' }}>
-      <div className="ad-spinner ad-spinner-lg" style={{ margin: '0 auto' }}></div>
+    <div style={{ textAlign: 'center', padding: '64px' }}>
+      <div className="spinner" style={{ margin: '0 auto 16px', width: '40px', height: '40px' }}></div>
+      <p className="text-muted">Loading seat layout...</p>
     </div>
   );
 
   return (
     <div>
       {/* Header */}
-      <div className="d-flex align-center justify-between flex-wrap gap-2 mb-4">
+      <div className="d-flex align-center justify-between flex-wrap gap-3 mb-4">
         <div>
-          <button className="btn-ad btn-ad-ghost btn-ad-sm mb-2" onClick={() => navigate('/admin/matatus')}>
+          <button className="btn btn-outline btn-sm mb-2" onClick={() => navigate('/admin/matatus')}>
             <i className="bi bi-arrow-left"></i> Back to Matatus
           </button>
-          <h4 className="fw-800" style={{ marginBottom: 2 }}>
+          <h3 style={{ marginBottom: '4px' }}>
             Seat Layout — {matatu?.name}
-          </h4>
+          </h3>
           <p className="text-muted" style={{ margin: 0 }}>
-            <code>{matatu?.plate_number}</code> · {realSeats.length} bookable seats
+            <code style={{ 
+              background: 'var(--gray-100)',
+              padding: '2px 6px',
+              borderRadius: 'var(--radius-xs)',
+              marginRight: '8px'
+            }}>{matatu?.plate_number}</code> 
+            · {realSeats.length} bookable seats
           </p>
         </div>
         <div className="d-flex gap-2 flex-wrap">
-          <button className="btn-ad btn-ad-secondary btn-ad-sm" onClick={clearAll}>
+          <button className="btn btn-outline btn-sm" onClick={clearAll}>
             <i className="bi bi-trash"></i> Clear All
           </button>
           <button
-            className={`btn-ad btn-ad-primary ${saved ? 'btn-ad-success' : ''}`}
-            onClick={handleSave} disabled={saving}
-            style={saved ? { background: 'var(--success)', borderColor: 'var(--success)' } : {}}
+            className={`btn ${saved ? 'btn-success' : 'btn-primary'}`}
+            onClick={handleSave} 
+            disabled={saving}
           >
-            {saving ? <><div className="ad-spinner ad-spinner-sm ad-spinner-white"></div> Saving...</>
-              : saved ? <><i className="bi bi-check2-circle"></i> Saved!</>
-              : <><i className="bi bi-floppy2"></i> Save Layout</>}
+            {saving ? (
+              <><div className="spinner" style={{ width: '18px', height: '18px', marginRight: '8px' }}></div> Saving...</>
+            ) : saved ? (
+              <><i className="bi bi-check2-circle"></i> Saved!</>
+            ) : (
+              <><i className="bi bi-floppy2"></i> Save Layout</>
+            )}
           </button>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: 16, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '24px', alignItems: 'start' }}>
         {/* ── Left: Grid ── */}
         <div>
           {/* Templates */}
-          <div className="ad-card ad-card-pad mb-3">
-            <div className="d-flex align-center gap-3 flex-wrap">
-              <span style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--gray-600)' }}>Load template:</span>
-              <button className="btn-ad btn-ad-secondary btn-ad-sm" onClick={() => loadTemplate('14')}>
-                <i className="bi bi-layout-split"></i> 14-Seater Nissan
-              </button>
-              <button className="btn-ad btn-ad-secondary btn-ad-sm" onClick={() => loadTemplate('33')}>
-                <i className="bi bi-layout-split"></i> 33-Seater Rosa
-              </button>
-              <div className="d-flex align-center gap-2 ml-auto" style={{ marginLeft: 'auto' }}>
-                <span style={{ fontSize: '.78rem', color: 'var(--gray-500)' }}>Grid:</span>
-                <input type="number" min={4} max={14} value={rows} onChange={e => setRows(Number(e.target.value))}
-                  className="ad-input" style={{ width: 56, padding: '4px 8px', textAlign: 'center' }} />
-                <span style={{ color: 'var(--gray-400)' }}>×</span>
-                <input type="number" min={3} max={8} value={cols} onChange={e => setCols(Number(e.target.value))}
-                  className="ad-input" style={{ width: 56, padding: '4px 8px', textAlign: 'center' }} />
+          <div className="ad-card" style={{ marginBottom: '16px' }}>
+            <div className="ad-card-body">
+              <div className="d-flex align-center gap-3 flex-wrap">
+                <span style={{ fontSize: '.85rem', fontWeight: '600', color: 'var(--gray-600)' }}>Load template:</span>
+                <button className="btn btn-outline btn-sm" onClick={() => loadTemplate('14')}>
+                  <i className="bi bi-layout-split"></i> 14-Seater Nissan
+                </button>
+                <button className="btn btn-outline btn-sm" onClick={() => loadTemplate('33')}>
+                  <i className="bi bi-layout-split"></i> 33-Seater Rosa
+                </button>
+                <div className="d-flex align-center gap-2" style={{ marginLeft: 'auto' }}>
+                  <span style={{ fontSize: '.78rem', color: 'var(--gray-500)' }}>Grid:</span>
+                  <input 
+                    type="number" 
+                    min={4} 
+                    max={14} 
+                    value={rows} 
+                    onChange={e => setRows(Number(e.target.value))}
+                    className="form-control" 
+                    style={{ width: '60px', padding: '4px 8px', textAlign: 'center' }} 
+                  />
+                  <span style={{ color: 'var(--gray-400)' }}>×</span>
+                  <input 
+                    type="number" 
+                    min={3} 
+                    max={8} 
+                    value={cols} 
+                    onChange={e => setCols(Number(e.target.value))}
+                    className="form-control" 
+                    style={{ width: '60px', padding: '4px 8px', textAlign: 'center' }} 
+                  />
+                </div>
               </div>
             </div>
           </div>
 
           {/* Painting toolbar */}
-          <div className="ad-card mb-3">
+          <div className="ad-card" style={{ marginBottom: '16px' }}>
             <div className="ad-card-header">
               <span className="ad-card-title">
-                <i className="bi bi-palette" style={{ marginRight: 6, color: 'var(--primary)' }}></i>
+                <i className="bi bi-palette" style={{ marginRight: '6px', color: 'var(--primary)' }}></i>
                 Paint Tool
               </span>
-              <span className="text-muted text-sm">Click cell to place · Shift+Click to edit properties</span>
+              <span className="text-muted" style={{ fontSize: '.8rem' }}>Click cell to place · Shift+Click to edit</span>
             </div>
-            <div style={{ padding: '12px 16px', display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              {PALETTE.map(p => (
+            <div className="ad-card-body">
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {PALETTE.map(p => (
+                  <button
+                    key={p.key}
+                    onClick={() => setActiveTool(p.key)}
+                    title={p.tip}
+                    style={{
+                      width: '48px', 
+                      height: '38px',
+                      background: p.bg,
+                      color: p.color,
+                      border: `2px solid ${activeTool === p.key ? 'var(--primary)' : p.border}`,
+                      borderRadius: '7px',
+                      fontSize: '.68rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: 'monospace',
+                      boxShadow: activeTool === p.key ? '0 0 0 3px rgba(5, 150, 105, 0.2)' : 'none',
+                      transition: 'all .12s',
+                    }}
+                  >
+                    {p.label || ' '}
+                  </button>
+                ))}
+                {/* Eraser */}
                 <button
-                  key={p.key}
-                  onClick={() => setActiveTool(p.key)}
-                  title={p.tip}
+                  onClick={() => setActiveTool('erase')}
+                  title="Erase cell"
                   style={{
-                    width: 48, height: 38,
-                    background: p.bg,
-                    color: p.color,
-                    border: `2px solid ${activeTool === p.key ? 'var(--primary)' : p.border}`,
-                    borderRadius: 7,
-                    fontSize: '.68rem',
-                    fontWeight: 700,
+                    width: '48px', 
+                    height: '38px',
+                    background: activeTool === 'erase' ? 'var(--danger-light)' : 'var(--gray-100)',
+                    color: activeTool === 'erase' ? 'var(--danger)' : 'var(--gray-500)',
+                    border: `2px solid ${activeTool === 'erase' ? 'var(--danger)' : 'var(--gray-300)'}`,
+                    borderRadius: '7px', 
+                    fontSize: '1rem', 
                     cursor: 'pointer',
-                    fontFamily: 'var(--font-mono)',
-                    boxShadow: activeTool === p.key ? '0 0 0 3px rgba(37,99,235,.2)' : 'none',
-                    transition: 'all .12s',
+                    boxShadow: activeTool === 'erase' ? '0 0 0 3px rgba(220,38,38,.15)' : 'none',
+                    transition: 'all .12s', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
                   }}
                 >
-                  {p.label || ' '}
+                  <i className="bi bi-eraser"></i>
                 </button>
-              ))}
-              {/* Eraser */}
-              <button
-                onClick={() => setActiveTool('erase')}
-                title="Erase cell"
-                style={{
-                  width: 48, height: 38,
-                  background: activeTool === 'erase' ? 'var(--danger-light)' : 'var(--gray-100)',
-                  color: activeTool === 'erase' ? 'var(--danger)' : 'var(--gray-500)',
-                  border: `2px solid ${activeTool === 'erase' ? 'var(--danger)' : 'var(--gray-300)'}`,
-                  borderRadius: 7, fontSize: '1rem', cursor: 'pointer',
-                  boxShadow: activeTool === 'erase' ? '0 0 0 3px rgba(220,38,38,.15)' : 'none',
-                  transition: 'all .12s', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                <i className="bi bi-eraser"></i>
-              </button>
+              </div>
             </div>
           </div>
 
           {/* The grid */}
-          <div className="ad-card ad-card-pad" style={{ overflowX: 'auto' }}>
-            <div style={{ fontSize: '.75rem', color: 'var(--gray-400)', marginBottom: 10, textAlign: 'center' }}>
-              ▲ FRONT OF MATATU
-            </div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${cols}, 42px)`,
-              gridTemplateRows: `repeat(${rows}, 44px)`,
-              gap: 6,
-              width: 'fit-content',
-              margin: '0 auto',
-            }}>
-              {Array.from({ length: rows }, (_, r) =>
-                Array.from({ length: cols }, (_, c) => {
-                  const row = r + 1, col = c + 1;
-                  const seat = getSeat(row, col);
-                  const isSelected = selected?.row === row && selected?.col === col;
-                  const style = seat ? getSeatStyle(seat) : null;
+          <div className="ad-card">
+            <div className="ad-card-body" style={{ overflowX: 'auto' }}>
+              <div style={{ fontSize: '.75rem', color: 'var(--gray-400)', marginBottom: '10px', textAlign: 'center' }}>
+                ▲ FRONT OF MATATU
+              </div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${cols}, 42px)`,
+                gridTemplateRows: `repeat(${rows}, 44px)`,
+                gap: '6px',
+                width: 'fit-content',
+                margin: '0 auto',
+              }}>
+                {Array.from({ length: rows }, (_, r) =>
+                  Array.from({ length: cols }, (_, c) => {
+                    const row = r + 1, col = c + 1;
+                    const seat = getSeat(row, col);
+                    const isSelected = selected?.row === row && selected?.col === col;
+                    const style = seat ? getSeatStyle(seat) : null;
 
-                  return (
-                    <div
-                      key={`${row}-${col}`}
-                      onClick={(e) => handleCellClick(row, col, e)}
-                      style={{
-                        width: 42, height: 42,
-                        borderRadius: 7,
-                        border: `2px solid ${isSelected ? 'var(--primary)' : seat ? style.border : 'var(--gray-200)'}`,
-                        background: seat ? (seat.bg_color || style.bg) : 'var(--gray-50)',
-                        color: seat ? (seat.text_color || style.color) : 'var(--gray-300)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '.65rem', fontWeight: 700,
-                        fontFamily: 'var(--font-mono)',
-                        cursor: activeTool === 'erase' ? 'cell' : 'pointer',
-                        userSelect: 'none',
-                        boxShadow: isSelected ? '0 0 0 3px rgba(37,99,235,.25)' : 'none',
-                        transition: 'transform .1s',
-                      }}
-                      onMouseEnter={e => { if (seat && !seat.is_aisle_gap) e.currentTarget.style.transform = 'scale(1.05)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                      title={seat
-                        ? `${seat.is_driver_seat ? 'Driver' : seat.is_conductor_seat ? 'Conductor' : seat.is_aisle_gap ? 'Gap' : `Seat ${seat.seat_number} (${seat.seat_class})`}`
-                        : `Empty [${row},${col}]`}
-                    >
-                      {seat ? (seat.custom_label || seat.seat_number || (seat.is_aisle_gap ? '' : '?')) : ''}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-            <div style={{ fontSize: '.72rem', color: 'var(--gray-400)', marginTop: 10, textAlign: 'center' }}>
-              {realSeats.length} bookable seats · {grid.filter(s => s.is_aisle_gap).length} gaps
+                    return (
+                      <div
+                        key={`${row}-${col}`}
+                        onClick={(e) => handleCellClick(row, col, e)}
+                        style={{
+                          width: '42px', 
+                          height: '42px',
+                          borderRadius: '7px',
+                          border: `2px solid ${isSelected ? 'var(--primary)' : seat ? style.border : 'var(--gray-200)'}`,
+                          background: seat ? (seat.bg_color || style.bg) : 'var(--gray-50)',
+                          color: seat ? (seat.text_color || style.color) : 'var(--gray-300)',
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          fontSize: '.65rem', 
+                          fontWeight: 700,
+                          fontFamily: 'monospace',
+                          cursor: activeTool === 'erase' ? 'cell' : 'pointer',
+                          userSelect: 'none',
+                          boxShadow: isSelected ? '0 0 0 3px rgba(5, 150, 105, 0.25)' : 'none',
+                          transition: 'transform .1s',
+                        }}
+                        onMouseEnter={e => { if (seat && !seat.is_aisle_gap) e.currentTarget.style.transform = 'scale(1.05)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                        title={seat
+                          ? `${seat.is_driver_seat ? 'Driver' : seat.is_conductor_seat ? 'Conductor' : seat.is_aisle_gap ? 'Gap' : `Seat ${seat.seat_number} (${seat.seat_class})`}`
+                          : `Empty [${row},${col}]`}
+                      >
+                        {seat ? (seat.custom_label || seat.seat_number || (seat.is_aisle_gap ? '' : '?')) : ''}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              <div style={{ fontSize: '.72rem', color: 'var(--gray-400)', marginTop: '10px', textAlign: 'center' }}>
+                {realSeats.length} bookable seats · {grid.filter(s => s.is_aisle_gap).length} gaps
+              </div>
             </div>
           </div>
         </div>
 
         {/* ── Right Panel ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Seat Properties */}
           <div className="ad-card">
             <div className="ad-card-header">
               <span className="ad-card-title">
-                <i className="bi bi-sliders" style={{ marginRight: 6 }}></i>
+                <i className="bi bi-sliders" style={{ marginRight: '6px' }}></i>
                 Seat Properties
               </span>
             </div>
-            <div style={{ padding: 14 }}>
+            <div className="ad-card-body">
               {!selectedSeat ? (
-                <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--gray-400)', fontSize: '.82rem' }}>
-                  <i className="bi bi-cursor" style={{ fontSize: '1.4rem', display: 'block', marginBottom: 8 }}></i>
-                  Shift+Click a seat to edit its properties
+                <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--gray-400)', fontSize: '.85rem' }}>
+                  <i className="bi bi-cursor" style={{ fontSize: '1.4rem', display: 'block', marginBottom: '8px' }}></i>
+                  Shift+Click a seat to edit
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div className="ad-form-group">
-                    <label className="ad-label">Seat Number</label>
-                    <input className="ad-input" value={selectedSeat.seat_number}
-                      onChange={e => updateSelected('seat_number', e.target.value)} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Seat Number</label>
+                    <input 
+                      className="form-control" 
+                      value={selectedSeat.seat_number}
+                      onChange={e => updateSelected('seat_number', e.target.value)} 
+                    />
                   </div>
-                  <div className="ad-form-group">
-                    <label className="ad-label">Custom Label</label>
-                    <input className="ad-input" placeholder="Leave blank to use seat number"
+                  <div className="form-group">
+                    <label className="form-label">Custom Label</label>
+                    <input 
+                      className="form-control" 
+                      placeholder="Leave blank to use seat number"
                       value={selectedSeat.custom_label}
-                      onChange={e => updateSelected('custom_label', e.target.value)} />
+                      onChange={e => updateSelected('custom_label', e.target.value)} 
+                    />
                   </div>
-                  <div className="ad-form-group">
-                    <label className="ad-label">Class</label>
-                    <select className="ad-select" value={selectedSeat.seat_class}
-                      onChange={e => updateSelected('seat_class', e.target.value)}>
+                  <div className="form-group">
+                    <label className="form-label">Class</label>
+                    <select 
+                      className="form-control" 
+                      value={selectedSeat.seat_class}
+                      onChange={e => updateSelected('seat_class', e.target.value)}
+                    >
                       <option value="window">Window</option>
                       <option value="aisle">Aisle</option>
                       <option value="front">Front</option>
                       <option value="conductor">Conductor</option>
                     </select>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <div className="ad-form-group">
-                      <label className="ad-label">BG Color</label>
-                      <input type="color" className="ad-input" style={{ padding: 3, height: 36, cursor: 'pointer' }}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div className="form-group">
+                      <label className="form-label">BG Color</label>
+                      <input 
+                        type="color" 
+                        className="form-control" 
+                        style={{ padding: '3px', height: '36px', cursor: 'pointer' }}
                         value={selectedSeat.bg_color || '#dcfce7'}
-                        onChange={e => updateSelected('bg_color', e.target.value)} />
+                        onChange={e => updateSelected('bg_color', e.target.value)} 
+                      />
                     </div>
-                    <div className="ad-form-group">
-                      <label className="ad-label">Text Color</label>
-                      <input type="color" className="ad-input" style={{ padding: 3, height: 36, cursor: 'pointer' }}
+                    <div className="form-group">
+                      <label className="form-label">Text Color</label>
+                      <input 
+                        type="color" 
+                        className="form-control" 
+                        style={{ padding: '3px', height: '36px', cursor: 'pointer' }}
                         value={selectedSeat.text_color || '#15803d'}
-                        onChange={e => updateSelected('text_color', e.target.value)} />
+                        onChange={e => updateSelected('text_color', e.target.value)} 
+                      />
                     </div>
                   </div>
-                  <div className="ad-form-group">
-                    <label className="ad-label">Col Span</label>
-                    <input className="ad-input" type="number" min={1} max={4}
+                  <div className="form-group">
+                    <label className="form-label">Col Span</label>
+                    <input 
+                      className="form-control" 
+                      type="number" 
+                      min={1} 
+                      max={4}
                       value={selectedSeat.col_span}
-                      onChange={e => updateSelected('col_span', Number(e.target.value))} />
+                      onChange={e => updateSelected('col_span', Number(e.target.value))} 
+                    />
                   </div>
-                  <button className="btn-ad btn-ad-secondary btn-ad-sm" onClick={() => setSelected(null)}>
+                  <button className="btn btn-outline btn-sm" onClick={() => setSelected(null)}>
                     <i className="bi bi-x"></i> Deselect
                   </button>
                 </div>
@@ -420,37 +484,45 @@ export default function AdminSeatLayout() {
           </div>
 
           {/* Legend */}
-          <div className="ad-card ad-card-pad">
-            <div className="ad-section-title mb-2">Legend</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {PALETTE.filter(p => p.key !== 'gap').map(p => (
-                <div key={p.key} className="d-flex align-center gap-2">
-                  <div style={{ width: 20, height: 16, background: p.bg, border: `1.5px solid ${p.border}`, borderRadius: 3, flexShrink: 0 }}></div>
-                  <span style={{ fontSize: '.78rem', color: 'var(--gray-600)' }}>{p.tip}</span>
+          <div className="ad-card">
+            <div className="ad-card-header">
+              <span className="ad-card-title">Legend</span>
+            </div>
+            <div className="ad-card-body">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {PALETTE.filter(p => p.key !== 'gap').map(p => (
+                  <div key={p.key} className="d-flex align-center gap-2">
+                    <div style={{ width: '20px', height: '16px', background: p.bg, border: `1.5px solid ${p.border}`, borderRadius: '3px', flexShrink: 0 }}></div>
+                    <span style={{ fontSize: '.8rem', color: 'var(--gray-600)' }}>{p.tip}</span>
+                  </div>
+                ))}
+                <div className="d-flex align-center gap-2">
+                  <div style={{ width: '20px', height: '16px', background: 'var(--gray-50)', border: '1.5px dashed var(--gray-300)', borderRadius: '3px' }}></div>
+                  <span style={{ fontSize: '.8rem', color: 'var(--gray-600)' }}>Aisle Gap</span>
                 </div>
-              ))}
-              <div className="d-flex align-center gap-2">
-                <div style={{ width: 20, height: 16, background: 'var(--gray-50)', border: '1.5px dashed var(--gray-300)', borderRadius: 3 }}></div>
-                <span style={{ fontSize: '.78rem', color: 'var(--gray-600)' }}>Aisle Gap</span>
               </div>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="ad-card ad-card-pad">
-            <div className="ad-section-title mb-2">Layout Stats</div>
-            {[
-              ['Bookable Seats', realSeats.length],
-              ['Driver Seat', grid.filter(s => s.is_driver_seat).length],
-              ['Conductor', grid.filter(s => s.is_conductor_seat).length],
-              ['Aisle Gaps', grid.filter(s => s.is_aisle_gap).length],
-              ['Grid Size', `${rows} × ${cols}`],
-            ].map(([l, v]) => (
-              <div key={l} className="d-flex justify-between" style={{ padding: '5px 0', borderBottom: '1px solid var(--gray-100)', fontSize: '.82rem' }}>
-                <span style={{ color: 'var(--gray-500)' }}>{l}</span>
-                <span style={{ fontWeight: 700 }}>{v}</span>
-              </div>
-            ))}
+          <div className="ad-card">
+            <div className="ad-card-header">
+              <span className="ad-card-title">Layout Stats</span>
+            </div>
+            <div className="ad-card-body">
+              {[
+                ['Bookable Seats', realSeats.length],
+                ['Driver Seat', grid.filter(s => s.is_driver_seat).length],
+                ['Conductor', grid.filter(s => s.is_conductor_seat).length],
+                ['Aisle Gaps', grid.filter(s => s.is_aisle_gap).length],
+                ['Grid Size', `${rows} × ${cols}`],
+              ].map(([l, v]) => (
+                <div key={l} className="d-flex justify-between" style={{ padding: '6px 0', borderBottom: '1px solid var(--gray-100)', fontSize: '.85rem' }}>
+                  <span style={{ color: 'var(--gray-500)' }}>{l}</span>
+                  <span style={{ fontWeight: '600' }}>{v}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
