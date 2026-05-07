@@ -10,11 +10,10 @@ const FEATURE_IMAGES = [
   "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600&q=80&fit=crop",
 ];
 
-/* ─── Town Combobox (Improved) ─── */
+/* ─── Town Combobox ─── */
 function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [focused, setFocused] = useState(false);
   const ref = useRef(null);
 
   const selectedTown = towns.find(t => t.slug === value);
@@ -49,8 +48,7 @@ function TownSearch({ label, value, onChange, towns, excludeSlug, placeholder })
           type="text"
           value={query}
           onChange={e => { setQuery(e.target.value); setOpen(true); if (!e.target.value) onChange(""); }}
-          onFocus={() => { setFocused(true); setOpen(true); }}
-          onBlur={() => setFocused(false)}
+          onFocus={() => { setOpen(true); }}
           placeholder={placeholder}
           autoComplete="off"
           className="form-control"
@@ -128,10 +126,10 @@ export default function Home() {
 
   const popularRoutes = [
     { from: "Murang'a", to: "Nairobi", duration: "2h 30m", fare: "KES 350", type: "express", departures: "15 daily" },
-    { from: "Murang'a", to: "Thika",   duration: "1h 30m", fare: "KES 200", type: "stage", departures: "25 daily" },
+    { from: "Murang'a", to: "Thika",   duration: "1h 30m", fare: "KES 200", type: "stage",   departures: "25 daily" },
     { from: "Murang'a", to: "Nyeri",   duration: "2h",     fare: "KES 300", type: "express", departures: "12 daily" },
-    { from: "Thika",    to: "Nairobi", duration: "1h",     fare: "KES 150", type: "stage", departures: "30 daily" },
-    { from: "Murang'a", to: "Embu",    duration: "3h",     fare: "KES 450", type: "express", departures: "8 daily" },
+    { from: "Thika",    to: "Nairobi", duration: "1h",     fare: "KES 150", type: "stage",   departures: "30 daily" },
+    { from: "Murang'a", to: "Embu",    duration: "3h",     fare: "KES 450", type: "express", departures: "8 daily"  },
     { from: "Nairobi",  to: "Murang'a", duration: "2h 30m", fare: "KES 350", type: "express", departures: "15 daily" },
   ];
 
@@ -174,10 +172,29 @@ export default function Home() {
 
   return (
     <>
-      {/* ════════ HERO SECTION (from global CSS) ════════ */}
+      {/* ════════ HERO SECTION ════════ */}
       <section className="hero">
-        <div className="hero-bg" />
-        <div className="hero-container">
+        {/* ✅ FIX: Hero background image injected via inline style */}
+        <div
+          className="hero-bg"
+          style={{
+            backgroundImage: `url(${HERO_IMAGE})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        />
+        {/* Dark overlay for readability */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.40) 100%)',
+            zIndex: 1,
+          }}
+        />
+
+        <div className="hero-container" style={{ position: 'relative', zIndex: 2 }}>
           <div className="hero-content">
             <div className="hero-badge">
               <span className="hero-badge-dot" />
@@ -239,7 +256,7 @@ export default function Home() {
                       placeholder="Origin town..."
                     />
                   </div>
-                  
+
                   <button
                     type="button"
                     onClick={swapLocations}
@@ -311,7 +328,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════════ POPULAR ROUTES (from second Home page) ════════ */}
+      {/* ════════ POPULAR ROUTES ════════ */}
       <section className="routes-section">
         <div className="container">
           <div className="section-header">
@@ -370,7 +387,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════════ FEATURES (from second Home page) ════════ */}
+      {/* ════════ FEATURES ════════ */}
       <section className="features-section">
         <div className="container">
           <div className="section-header">
@@ -387,6 +404,17 @@ export default function Home() {
           <div className="features-grid">
             {features.map((f, i) => (
               <div key={i} className="feature-card">
+                {/* ✅ FIX: Feature images now rendered using f.img */}
+                <div className="feature-img-wrapper">
+                  <img
+                    src={f.img}
+                    alt={f.title}
+                    className="feature-img"
+                    onError={e => { e.target.style.display = 'none'; }}
+                  />
+                  <div className="feature-img-overlay" />
+                </div>
+
                 <div className="feature-icon">
                   <i className={`bi ${f.icon}`} />
                 </div>
@@ -401,7 +429,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════════ CTA SECTION (from second Home page) ════════ */}
+      {/* ════════ CTA SECTION ════════ */}
       <section className="cta-section">
         <div className="cta-container">
           <div className="cta-icon">
@@ -409,7 +437,7 @@ export default function Home() {
           </div>
           <h2 className="cta-title">Already booked? Track your seat.</h2>
           <p className="cta-description">
-            Enter your booking reference to check status, view your seat, 
+            Enter your booking reference to check status, view your seat,
             and get all trip details instantly.
           </p>
           <button
@@ -422,7 +450,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ════════ FOOTER (from second Home page) with styled quick links ════════ */}
+      {/* ════════ FOOTER ════════ */}
       <footer className="footer">
         <div className="footer-container">
           <div className="footer-grid">
@@ -440,18 +468,10 @@ export default function Home() {
                 Safe, affordable, and reliable matatu travel across Murang'a County and beyond.
               </p>
               <div className="footer-social">
-                <a href="#" className="footer-social-link">
-                  <i className="bi bi-facebook" />
-                </a>
-                <a href="#" className="footer-social-link">
-                  <i className="bi bi-twitter-x" />
-                </a>
-                <a href="#" className="footer-social-link">
-                  <i className="bi bi-instagram" />
-                </a>
-                <a href="#" className="footer-social-link">
-                  <i className="bi bi-whatsapp" />
-                </a>
+                <a href="#" className="footer-social-link"><i className="bi bi-facebook" /></a>
+                <a href="#" className="footer-social-link"><i className="bi bi-twitter-x" /></a>
+                <a href="#" className="footer-social-link"><i className="bi bi-instagram" /></a>
+                <a href="#" className="footer-social-link"><i className="bi bi-whatsapp" /></a>
               </div>
             </div>
 
@@ -486,22 +506,10 @@ export default function Home() {
             <div>
               <h4 className="footer-title">Contact Us</h4>
               <ul className="footer-links contact-links">
-                <li>
-                  <i className="bi bi-telephone me-2" />
-                  <span>+254 722 400 400</span>
-                </li>
-                <li>
-                  <i className="bi bi-envelope me-2" />
-                  <span>info@mtnsacco.co.ke</span>
-                </li>
-                <li>
-                  <i className="bi bi-geo-alt me-2" />
-                  <span>Murang'a Town, Kenya</span>
-                </li>
-                <li>
-                  <i className="bi bi-clock me-2" />
-                  <span>Open 24/7</span>
-                </li>
+                <li><i className="bi bi-telephone me-2" /><span>+254 722 400 400</span></li>
+                <li><i className="bi bi-envelope me-2" /><span>info@mtnsacco.co.ke</span></li>
+                <li><i className="bi bi-geo-alt me-2" /><span>Murang'a Town, Kenya</span></li>
+                <li><i className="bi bi-clock me-2" /><span>Open 24/7</span></li>
               </ul>
             </div>
           </div>
@@ -516,9 +524,53 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Additional styles for search dropdown and styled links */}
+      {/* ════════ STYLES ════════ */}
       <style>{`
-        /* Ensure dropdown appears right below input */
+        /* ── Hero background positioning ── */
+        .hero {
+          position: relative;
+          overflow: hidden;
+        }
+        .hero-bg {
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          background-size: cover !important;
+          background-position: center !important;
+          background-repeat: no-repeat !important;
+          transform: scale(1.03);
+          transition: transform 8s ease-out;
+        }
+        .hero:hover .hero-bg {
+          transform: scale(1.06);
+        }
+
+        /* ── Feature card image ── */
+        .feature-img-wrapper {
+          position: relative;
+          width: 100%;
+          height: 180px;
+          border-radius: var(--radius, 10px);
+          overflow: hidden;
+          margin-bottom: 20px;
+        }
+        .feature-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: transform 0.4s ease;
+        }
+        .feature-card:hover .feature-img {
+          transform: scale(1.07);
+        }
+        .feature-img-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.25) 100%);
+        }
+
+        /* ── Dropdown ── */
         .town-search-dropdown {
           position: absolute;
           top: 100%;
@@ -533,18 +585,35 @@ export default function Home() {
           max-height: 250px;
           overflow-y: auto;
         }
+        .town-search-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 14px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          transition: background 0.15s;
+        }
+        .town-search-item:hover,
+        .town-search-item.active {
+          background: var(--gray-50, #f8f9fa);
+          color: var(--primary, #0d6efd);
+        }
+        .town-search-empty {
+          padding: 12px 14px;
+          font-size: 0.85rem;
+          color: var(--gray-400);
+        }
 
-        /* Styled footer links */
+        /* ── Footer styled links ── */
         .footer-links.styled-links {
           list-style: none;
           padding: 0;
           margin: 0;
         }
-
         .footer-links.styled-links li {
           margin-bottom: 12px;
         }
-
         .footer-link-btn {
           background: none;
           border: none;
@@ -555,34 +624,30 @@ export default function Home() {
           align-items: center;
           gap: 10px;
           padding: 6px 0;
-          transition: var(--transition);
+          transition: var(--transition, all 0.2s);
           width: 100%;
           text-align: left;
         }
-
         .footer-link-btn i {
           font-size: 1rem;
           color: var(--gray-500);
-          transition: var(--transition);
+          transition: var(--transition, all 0.2s);
           width: 20px;
         }
-
         .footer-link-btn:hover {
           color: white;
           transform: translateX(5px);
         }
-
         .footer-link-btn:hover i {
-          color: var(--primary-light);
+          color: var(--primary-light, #6ea8fe);
         }
 
-        /* Contact links styling */
+        /* ── Contact links ── */
         .contact-links {
           list-style: none;
           padding: 0;
           margin: 0;
         }
-
         .contact-links li {
           display: flex;
           align-items: center;
@@ -591,14 +656,13 @@ export default function Home() {
           color: var(--gray-400);
           font-size: 0.95rem;
         }
-
         .contact-links li i {
-          color: var(--primary-light);
+          color: var(--primary-light, #6ea8fe);
           font-size: 1.1rem;
           width: 20px;
         }
 
-        /* Ensure form-group has relative positioning for dropdown */
+        /* ── Ensure form-group has relative positioning ── */
         .form-group {
           position: relative;
         }
